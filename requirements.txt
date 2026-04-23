@@ -1,0 +1,10 @@
+# Установка всех зависимостей из корня проекта:
+#   pip install -r requirements.txt
+
+-r backend/requirements.txt
+
+# HTTP-клиент (нужен для fastapi.testclient / ручной отладки API)
+httpx>=0.27.0
+
+# Загрузка .env в pydantic-settings и других инструментах
+python-dotenv>=1.0.0
