@@ -1,0 +1,27 @@
+.app-shell {
+  min-height: 100vh;
+  padding: 10px 8px 18px;
+  background: #f6f6f6;
+}
+
+.app-content {
+  min-height: calc(100vh - 88px);
+  margin-top: 12px;
+  padding: 44px 40px;
+  background: #ffffff;
+}
+
+.app-content--wide {
+  padding-inline: clamp(18px, 4vw, 78px);
+}
+
+@media (max-width: 768px) {
+  .app-shell {
+    padding: 8px;
+  }
+
+  .app-content {
+    min-height: calc(100vh - 112px);
+    padding: 28px 16px;
+  }
+}
