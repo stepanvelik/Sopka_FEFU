@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Header } from './components/layout/Header.jsx';
 import { HomePage } from './pages/HomePage.jsx';
 import { ParticipantRegistrationPage } from './pages/ParticipantRegistrationPage.jsx';
+import { ParticipantsDatabasePage } from './pages/ParticipantsDatabasePage.jsx';
 import './styles/app.css';
 
 function getRouteFromHash() {
@@ -21,13 +22,15 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const isRegistrationPage = route === 'create';
+  const isWidePage = route === 'create' || route === 'database';
 
   return (
     <div className="app-shell">
       <Header />
-      <main className={`app-content ${isRegistrationPage ? 'app-content--wide' : ''}`}>
-        {route === 'create' ? <ParticipantRegistrationPage /> : <HomePage />}
+      <main className={`app-content ${isWidePage ? 'app-content--wide' : ''}`}>
+        {route === 'create' ? <ParticipantRegistrationPage /> : null}
+        {route === 'database' ? <ParticipantsDatabasePage /> : null}
+        {route !== 'create' && route !== 'database' ? <HomePage /> : null}
       </main>
     </div>
   );

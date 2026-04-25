@@ -1,4 +1,4 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1').replace(/\/$/, '');
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '');
 
 async function request(path, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -15,6 +15,11 @@ async function request(path, options = {}) {
       const payload = await response.json();
       if (typeof payload?.detail === 'string') {
         message = payload.detail;
+      } else if (Array.isArray(payload?.detail)) {
+        message = payload.detail
+          .map((item) => item?.msg)
+          .filter(Boolean)
+          .join(' ') || message;
       }
     } catch {
       // Ignore non-JSON errors and keep the fallback message.
@@ -36,11 +41,35 @@ export async function createStudent(payload) {
   });
 }
 
+export async function listStudents({ skip = 0, limit = 200, isActive = null } = {}) {
+  const params = new URLSearchParams({
+    skip: String(skip),
+    limit: String(limit),
+  });
+
+  if (isActive !== null) {
+    params.set('is_active', String(isActive));
+  }
+
+  return request(`/students?${params.toString()}`);
+}
+
 export async function createBankDetails(studentId, payload) {
   return request(`/students/${studentId}/bank-details`, {
     method: 'POST',
     body: JSON.stringify(payload),
   });
+}
+
+export async function listBankDetails(studentId, { activeOnly = null } = {}) {
+  const params = new URLSearchParams();
+
+  if (activeOnly !== null) {
+    params.set('active_only', String(activeOnly));
+  }
+
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return request(`/students/${studentId}/bank-details${suffix}`);
 }
 
 export { API_BASE_URL };
