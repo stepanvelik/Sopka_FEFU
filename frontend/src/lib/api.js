@@ -41,6 +41,17 @@ export async function createStudent(payload) {
   });
 }
 
+export async function getStudent(studentId) {
+  return request(`/students/${studentId}`);
+}
+
+export async function updateStudent(studentId, payload) {
+  return request(`/students/${studentId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function listStudents({ skip = 0, limit = 200, isActive = null } = {}) {
   const params = new URLSearchParams({
     skip: String(skip),
@@ -57,6 +68,13 @@ export async function listStudents({ skip = 0, limit = 200, isActive = null } = 
 export async function createBankDetails(studentId, payload) {
   return request(`/students/${studentId}/bank-details`, {
     method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateBankDetails(bankDetailsId, payload) {
+  return request(`/bank-details/${bankDetailsId}`, {
+    method: 'PATCH',
     body: JSON.stringify(payload),
   });
 }

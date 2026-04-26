@@ -170,6 +170,12 @@ function ParticipantRow({ student, isOpen, onToggle }) {
 
       {isOpen ? (
         <div className="participants-page__details">
+          <div className="participants-page__details-actions">
+            <a className="participants-page__edit-link" href={`#edit/${student.student_id}`}>
+              Редактировать запись
+            </a>
+          </div>
+
           {studentFieldGroups.map((group) => (
             <section className="participants-page__details-section" key={group.title}>
               <h2>{group.title}</h2>

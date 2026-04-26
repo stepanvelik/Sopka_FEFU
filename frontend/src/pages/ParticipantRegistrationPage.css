@@ -24,6 +24,12 @@
   color: #1e4f84;
 }
 
+.registration-page__subtitle {
+  margin: 0;
+  color: #506579;
+  font-size: 1rem;
+}
+
 .registration-page__form {
   display: flex;
   flex-direction: column;

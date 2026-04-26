@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Header } from './components/layout/Header.jsx';
 import { HomePage } from './pages/HomePage.jsx';
+import { ParticipantEditPage } from './pages/ParticipantEditPage.jsx';
 import { ParticipantImportPage } from './pages/ParticipantImportPage.jsx';
 import { ParticipantRegistrationPage } from './pages/ParticipantRegistrationPage.jsx';
 import { ParticipantsDatabasePage } from './pages/ParticipantsDatabasePage.jsx';
@@ -13,6 +14,7 @@ function getRouteFromHash() {
 
 export default function App() {
   const [route, setRoute] = useState(getRouteFromHash);
+  const [routeName, routeParam] = route.split('/');
 
   useEffect(() => {
     function handleHashChange() {
@@ -23,7 +25,8 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const isWidePage = route === 'create' || route === 'database' || route === 'import';
+  const isEditPage = routeName === 'edit' && routeParam;
+  const isWidePage = route === 'create' || route === 'database' || route === 'import' || isEditPage;
 
   return (
     <div className="app-shell">
@@ -32,7 +35,8 @@ export default function App() {
         {route === 'create' ? <ParticipantRegistrationPage /> : null}
         {route === 'import' ? <ParticipantImportPage /> : null}
         {route === 'database' ? <ParticipantsDatabasePage /> : null}
-        {route !== 'create' && route !== 'import' && route !== 'database' ? <HomePage /> : null}
+        {isEditPage ? <ParticipantEditPage studentId={routeParam} /> : null}
+        {route !== 'create' && route !== 'import' && route !== 'database' && !isEditPage ? <HomePage /> : null}
       </main>
     </div>
   );

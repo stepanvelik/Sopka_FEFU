@@ -132,6 +132,32 @@
   padding: 0 20px 20px;
 }
 
+.participants-page__details-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.participants-page__edit-link {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: #1c63b7;
+  color: #ffffff;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.participants-page__edit-link:hover,
+.participants-page__edit-link:focus-visible {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
 .participants-page__details-section {
   min-width: 0;
   padding: 16px;
@@ -229,6 +255,11 @@
 
   .participants-page__details {
     padding: 0 16px 16px;
+  }
+
+  .participants-page__details-actions,
+  .participants-page__edit-link {
+    width: 100%;
   }
 
   .participants-page__details-list {
