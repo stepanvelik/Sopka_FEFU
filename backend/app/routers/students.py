@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,6 +8,7 @@ from app.api import commit_session
 from app.database import get_session
 from app.models.student import Student
 from app.schemas.student import StudentCreate, StudentRead, StudentUpdate
+from app.services.excel_import import ExcelImportService, ImportMode
 
 router = APIRouter(prefix="/students", tags=["students"])
 
@@ -22,6 +23,29 @@ async def create_student(
     await commit_session(session)
     await session.refresh(student)
     return student
+
+
+@router.post("/import")
+async def import_students_from_excel(
+    mode: ImportMode = Query("update"),
+    file: UploadFile = File(...),
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    filename = file.filename or ""
+    if not filename.lower().endswith((".xlsx", ".xls")):
+        raise HTTPException(status_code=400, detail="Разрешены только файлы Excel: .xlsx или .xls")
+
+    payload = await file.read()
+    if not payload:
+        raise HTTPException(status_code=400, detail="Файл пуст.")
+
+    service = ExcelImportService()
+    try:
+        result = await service.import_bytes(session, payload, mode=mode)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return result.as_dict()
 
 
 @router.get("", response_model=list[StudentRead])

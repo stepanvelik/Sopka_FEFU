@@ -153,3 +153,15 @@ uvicorn main:app --reload
 ```
 
 Альтернатива из папки `backend`: `uvicorn app.main:app --reload`.
+
+## Импорт студентов из Excel
+
+Реализована загрузка Excel в БД через API и страницу импорта на фронтенде.
+
+- Ручка: `POST /api/v1/students/import?mode=update|skip`
+- Тело: `multipart/form-data`, поле файла: `file`
+- Поддерживаемые расширения: `.xlsx`, `.xls`
+- `mode=update` — обновлять существующих студентов, `mode=skip` — пропускать
+
+Поддерживаются русские и английские названия колонок (например `Фамилия`, `Имя`, `Дата рождения`, `Институт`, `Группа`, а также поля банковских реквизитов).  
+Обязательные поля: `last_name`, `first_name`, `birth_date`, `institute`, `study_group`.
