@@ -1,0 +1,147 @@
+.participant-import-page {
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+}
+
+.participant-import-page__title {
+  margin: 0;
+  color: #00529b;
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  font-weight: 400;
+}
+
+.participant-import-page__form {
+  margin: 0;
+}
+
+.participant-import-page__upload-panel {
+  display: flex;
+  min-height: 265px;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 68px;
+  padding: 66px 14px 22px;
+  border-radius: 12px;
+  background: #eff2fa;
+}
+
+.participant-import-page__file-field {
+  display: flex;
+  width: fit-content;
+  flex-direction: column;
+  gap: 12px;
+  color: #111827;
+  font-size: 1rem;
+}
+
+.participant-import-page__file-label {
+  line-height: 1.2;
+}
+
+.participant-import-page__file-control {
+  display: flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px 0 0;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.participant-import-page__file-input {
+  font: inherit;
+}
+
+.participant-import-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.participant-import-page__button {
+  display: inline-flex;
+  min-width: 168px;
+  min-height: 49px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 22px;
+  border: 1px solid #b8b8b8;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #111111;
+  font: inherit;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.participant-import-page__button:hover,
+.participant-import-page__button:focus-visible {
+  background: #f4f7fb;
+  transform: translateY(-1px);
+}
+
+.participant-import-page__button--primary {
+  border-color: #0061b1;
+  background: #0061b1;
+  color: #ffffff;
+}
+
+.participant-import-page__button--primary:hover,
+.participant-import-page__button--primary:focus-visible {
+  background: #00549a;
+}
+
+.participant-import-page__button--link {
+  max-width: 168px;
+}
+
+.participant-import-page__log-panel {
+  min-height: 266px;
+  border-radius: 12px;
+  background: #10043e;
+}
+
+@media (max-width: 768px) {
+  .participant-import-page {
+    gap: 24px;
+  }
+
+  .participant-import-page__upload-panel {
+    min-height: auto;
+    gap: 44px;
+    padding: 34px 14px 22px;
+  }
+
+  .participant-import-page__actions {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 520px) {
+  .participant-import-page__file-field,
+  .participant-import-page__file-control {
+    width: 100%;
+  }
+
+  .participant-import-page__file-control {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 8px 10px;
+  }
+
+  .participant-import-page__button {
+    width: 100%;
+  }
+
+  .participant-import-page__button--link {
+    max-width: none;
+  }
+
+  .participant-import-page__log-panel {
+    min-height: 220px;
+  }
+}

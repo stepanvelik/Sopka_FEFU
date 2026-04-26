@@ -35,6 +35,13 @@ const initialFormState = {
   account_number: '',
 };
 
+const registrationTabs = [
+  { id: 'personal', label: 'Личная информация' },
+  { id: 'contacts', label: 'Контактная информация' },
+  { id: 'documents', label: 'Документы' },
+  { id: 'bank', label: 'Банковские реквизиты' },
+];
+
 const fieldFormatters = {
   phone: (value) => formatPhone(value),
   birth_date: (value) => formatDate(value),
@@ -217,19 +224,10 @@ function FormField({
   );
 }
 
-function Section({ title, children, collapsible = false, isOpen = true, onToggle }) {
+function Section({ children }) {
   return (
-    <section className={`registration-page__section ${isOpen ? 'registration-page__section--open' : ''}`}>
-      <button
-        className={`registration-page__section-header ${collapsible ? 'registration-page__section-header--button' : ''}`}
-        type={collapsible ? 'button' : 'button'}
-        onClick={collapsible ? onToggle : undefined}
-        aria-expanded={collapsible ? isOpen : true}
-      >
-        <span>{title}</span>
-        {collapsible ? <span className="registration-page__section-icon">{isOpen ? '⌃' : '⌄'}</span> : null}
-      </button>
-      {isOpen ? <div className="registration-page__section-body">{children}</div> : null}
+    <section className="registration-page__section">
+      <div className="registration-page__section-body">{children}</div>
     </section>
   );
 }
@@ -335,16 +333,25 @@ function getValidationMessages(formData) {
 
 export function ParticipantRegistrationPage() {
   const [formData, setFormData] = useState(initialFormState);
-  const [personalOpen, setPersonalOpen] = useState(true);
-  const [documentsOpen, setDocumentsOpen] = useState(false);
-  const [bankOpen, setBankOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(registrationTabs[0].id);
   const [status, setStatus] = useState({ type: 'idle', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const activeTabIndex = registrationTabs.findIndex((tab) => tab.id === activeTab);
+  const isFirstTab = activeTabIndex === 0;
+  const isLastTab = activeTabIndex === registrationTabs.length - 1;
   const validationMessages = useMemo(() => getValidationMessages(formData), [formData]);
   const canSubmit = validationMessages.length === 0;
   const feedbackMessages = status.type === 'error' && status.message ? [status.message] : validationMessages;
   const validationState = status.type === 'success' ? 'success' : feedbackMessages.length === 0 ? 'ready' : 'error';
+
+  function goToPreviousTab() {
+    setActiveTab(registrationTabs[Math.max(activeTabIndex - 1, 0)].id);
+  }
+
+  function goToNextTab() {
+    setActiveTab(registrationTabs[Math.min(activeTabIndex + 1, registrationTabs.length - 1)].id);
+  }
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -413,9 +420,7 @@ export function ParticipantRegistrationPage() {
       }
 
       setFormData(initialFormState);
-      setPersonalOpen(true);
-      setDocumentsOpen(false);
-      setBankOpen(false);
+      setActiveTab(registrationTabs[0].id);
       setStatus({ type: 'success', message: 'Запись успешно создана.' });
     } catch (error) {
       setStatus({
@@ -437,12 +442,23 @@ export function ParticipantRegistrationPage() {
       </div>
 
       <form className="registration-page__form" onSubmit={handleSubmit}>
-        <Section
-          title="Личная информация"
-          collapsible
-          isOpen={personalOpen}
-          onToggle={() => setPersonalOpen((current) => !current)}
-        >
+        <div className="registration-page__tabs" role="tablist" aria-label="Разделы формы регистрации">
+          {registrationTabs.map((tab) => (
+            <button
+              key={tab.id}
+              className={`registration-page__tab ${activeTab === tab.id ? 'registration-page__tab--active' : ''}`}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'personal' ? (
+        <Section>
           <div className="registration-page__grid">
             <FormField label="Фамилия" name="last_name" value={formData.last_name} onChange={handleChange} required placeholder="Фамилия" />
             <FormField label="Имя" name="first_name" value={formData.first_name} onChange={handleChange} required placeholder="Имя" />
@@ -471,8 +487,10 @@ export function ParticipantRegistrationPage() {
             <FormField label="Группа" name="study_group" value={formData.study_group} onChange={handleChange} required placeholder="Б9123-09.03.03цтэ" />
           </div>
         </Section>
+        ) : null}
 
-        <Section title="Контактная информация">
+        {activeTab === 'contacts' ? (
+        <Section>
           <div className="registration-page__grid">
             <FormField
               label="Номер телефона"
@@ -495,13 +513,10 @@ export function ParticipantRegistrationPage() {
             />
           </div>
         </Section>
+        ) : null}
 
-        <Section
-          title="Документы"
-          collapsible
-          isOpen={documentsOpen}
-          onToggle={() => setDocumentsOpen((current) => !current)}
-        >
+        {activeTab === 'documents' ? (
+        <Section>
           <div className="registration-page__grid">
             <FormField
               label="Серия паспорта"
@@ -586,13 +601,10 @@ export function ParticipantRegistrationPage() {
             />
           </div>
         </Section>
+        ) : null}
 
-        <Section
-          title="Банковские реквизиты"
-          collapsible
-          isOpen={bankOpen}
-          onToggle={() => setBankOpen((current) => !current)}
-        >
+        {activeTab === 'bank' ? (
+        <Section>
           <div className="registration-page__grid">
             <FormField label="Наименование банка" name="bank_name" value={formData.bank_name} onChange={handleChange} placeholder="Наименование банка" />
             <FormField
@@ -630,8 +642,17 @@ export function ParticipantRegistrationPage() {
             />
           </div>
         </Section>
+        ) : null}
 
         <div className="registration-page__actions">
+          <div className="registration-page__tab-actions">
+            <button className="registration-page__nav-button" type="button" onClick={goToPreviousTab} disabled={isFirstTab}>
+              Назад
+            </button>
+            <button className="registration-page__nav-button registration-page__nav-button--primary" type="button" onClick={goToNextTab} disabled={isLastTab}>
+              Далее
+            </button>
+          </div>
           <div
             className={`registration-page__validation registration-page__validation--${validationState}`}
             aria-live="polite"
