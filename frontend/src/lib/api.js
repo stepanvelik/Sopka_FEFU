@@ -1,9 +1,10 @@
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '');
 
 async function request(path, options = {}) {
+  const isFormData = options.body instanceof FormData;
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(options.headers || {}),
     },
     ...options,
@@ -38,6 +39,9 @@ export async function createStudent(payload) {
   return request('/students', {
     method: 'POST',
     body: JSON.stringify(payload),
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
 }
 
@@ -49,6 +53,9 @@ export async function updateStudent(studentId, payload) {
   return request(`/students/${studentId}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
 }
 
@@ -69,6 +76,9 @@ export async function createBankDetails(studentId, payload) {
   return request(`/students/${studentId}/bank-details`, {
     method: 'POST',
     body: JSON.stringify(payload),
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
 }
 
@@ -76,6 +86,9 @@ export async function updateBankDetails(bankDetailsId, payload) {
   return request(`/bank-details/${bankDetailsId}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
 }
 
@@ -88,6 +101,15 @@ export async function listBankDetails(studentId, { activeOnly = null } = {}) {
 
   const suffix = params.toString() ? `?${params.toString()}` : '';
   return request(`/students/${studentId}/bank-details${suffix}`);
+}
+
+export async function importStudentsExcel(file, { mode = 'update' } = {}) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return request(`/students/import?mode=${encodeURIComponent(mode)}`, {
+    method: 'POST',
+    body: formData,
+  });
 }
 
 export { API_BASE_URL };
