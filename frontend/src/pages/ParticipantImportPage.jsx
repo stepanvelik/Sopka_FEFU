@@ -1,5 +1,5 @@
 import './ParticipantImportPage.css';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useCallback } from 'react';
 import { importStudentsExcel } from '../lib/api.js';
 
 export function ParticipantImportPage() {
@@ -8,6 +8,9 @@ export function ParticipantImportPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
+  const dragCounter = useRef(0);
 
   const summary = useMemo(() => {
     if (!result) return null;
@@ -21,6 +24,49 @@ export function ParticipantImportPage() {
     ];
   }, [result]);
 
+  const acceptFile = useCallback((file) => {
+    if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!['xlsx', 'xls'].includes(ext)) {
+      setError('Поддерживаются только файлы .xlsx и .xls');
+      return;
+    }
+    setError('');
+    setSelectedFile(file);
+  }, []);
+
+  const handleDragEnter = useCallback((e) => {
+    e.preventDefault();
+    dragCounter.current += 1;
+    if (dragCounter.current === 1) setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault();
+    dragCounter.current -= 1;
+    if (dragCounter.current === 0) setIsDragging(false);
+  }, []);
+
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+  }, []);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    dragCounter.current = 0;
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    acceptFile(file);
+  }, [acceptFile]);
+
+  const handleFileChange = useCallback((e) => {
+    acceptFile(e.target.files?.[0] ?? null);
+  }, [acceptFile]);
+
+  const handleZoneClick = () => {
+    fileInputRef.current?.click();
+  };
+
   async function handleSubmit(event) {
     event.preventDefault();
     setError('');
@@ -29,7 +75,6 @@ export function ParticipantImportPage() {
       setError('Выберите Excel-файл перед загрузкой.');
       return;
     }
-
     try {
       setIsLoading(true);
       const payload = await importStudentsExcel(selectedFile, { mode });
@@ -47,20 +92,72 @@ export function ParticipantImportPage() {
 
       <form className="participant-import-page__form" onSubmit={handleSubmit}>
         <div className="participant-import-page__upload-panel">
-          <label className="participant-import-page__file-field" htmlFor="participants-file">
-            <span className="participant-import-page__file-label">Файл из Excel</span>
-            <span className="participant-import-page__file-control">
-              <input
-                className="participant-import-page__file-input"
-                id="participants-file"
-                name="participants-file"
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
-              />
-            </span>
-          </label>
 
+          {/* Drag & drop zone */}
+          <div
+            className={`pip-dropzone${isDragging ? ' pip-dropzone--active' : ''}${selectedFile ? ' pip-dropzone--has-file' : ''}`}
+            onClick={handleZoneClick}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            role="button"
+            tabIndex={0}
+            aria-label="Загрузить Excel-файл"
+            onKeyDown={(e) => e.key === 'Enter' && handleZoneClick()}
+          >
+            <input
+              ref={fileInputRef}
+              className="pip-dropzone__input"
+              id="participants-file"
+              name="participants-file"
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleFileChange}
+            />
+
+            <div className="pip-dropzone__icon-wrap">
+              {selectedFile ? (
+                <svg className="pip-dropzone__icon pip-dropzone__icon--file" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="8" y="4" width="24" height="32" rx="3" fill="#e8f5e9" stroke="#43a047" strokeWidth="2"/>
+                  <rect x="32" y="4" width="8" height="8" rx="1" fill="#c8e6c9" stroke="#43a047" strokeWidth="2"/>
+                  <path d="M32 4 L40 12" stroke="#43a047" strokeWidth="2"/>
+                  <rect x="13" y="20" width="14" height="2.5" rx="1.2" fill="#43a047" opacity="0.5"/>
+                  <rect x="13" y="26" width="10" height="2.5" rx="1.2" fill="#43a047" opacity="0.5"/>
+                  <circle cx="36" cy="36" r="8" fill="#43a047"/>
+                  <path d="M32 36 L35 39 L40 33" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                <svg className="pip-dropzone__icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="8" y="14" width="32" height="26" rx="4" fill="#dbeafe" stroke="#93c5fd" strokeWidth="1.5" strokeDasharray="4 3"/>
+                  <path d="M24 32 V20" stroke="#3b82f6" strokeWidth="2.2" strokeLinecap="round"/>
+                  <path d="M19 25 L24 20 L29 25" stroke="#3b82f6" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <rect x="16" y="8" width="16" height="10" rx="3" fill="#bfdbfe" stroke="#60a5fa" strokeWidth="1.5"/>
+                  <path d="M20 13 H28" stroke="#3b82f6" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              )}
+            </div>
+
+            <div className="pip-dropzone__text">
+              {selectedFile ? (
+                <>
+                  <span className="pip-dropzone__filename">{selectedFile.name}</span>
+                  <span className="pip-dropzone__hint">
+                    {(selectedFile.size / 1024).toFixed(1)} КБ · нажмите, чтобы заменить
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="pip-dropzone__primary">
+                    {isDragging ? 'Отпустите файл' : 'Перетащите файл сюда'}
+                  </span>
+                  <span className="pip-dropzone__hint">или нажмите для выбора · .xlsx, .xls</span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Mode select */}
           <label className="participant-import-page__file-field" htmlFor="import-mode">
             <span className="participant-import-page__file-label">Режим обработки дублей</span>
             <select
