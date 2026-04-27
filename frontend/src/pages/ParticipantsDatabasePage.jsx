@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { listBankDetails, listStudents } from '../lib/api.js';
 import './ParticipantsDatabasePage.css';
 
+const PAGE_SIZE = 15;
+
 const studentFieldGroups = [
   {
     title: 'Учебные данные',
@@ -209,6 +211,7 @@ export function ParticipantsDatabasePage() {
   const [students, setStudents] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [openStudentId, setOpenStudentId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [status, setStatus] = useState({ type: 'loading', message: 'Загрузка участников...' });
 
   useEffect(() => {
@@ -251,6 +254,29 @@ export function ParticipantsDatabasePage() {
     return sortedStudents.filter((student) => normalizeSearchValue(getFullName(student)).includes(normalizedQuery));
   }, [searchQuery, sortedStudents]);
 
+  const totalPages = Math.max(1, Math.ceil(visibleStudents.length / PAGE_SIZE));
+
+  const paginatedStudents = useMemo(() => {
+    const pageStart = (currentPage - 1) * PAGE_SIZE;
+    return visibleStudents.slice(pageStart, pageStart + PAGE_SIZE);
+  }, [currentPage, visibleStudents]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+    setOpenStudentId(null);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  function goToPage(page) {
+    setOpenStudentId(null);
+    setCurrentPage(page);
+  }
+
   return (
     <div className="participants-page">
       <div className="participants-page__hero">
@@ -284,7 +310,7 @@ export function ParticipantsDatabasePage() {
       ) : null}
 
       <div className="participants-page__list">
-        {visibleStudents.map((student) => (
+        {paginatedStudents.map((student) => (
           <ParticipantRow
             key={student.student_id}
             student={student}
@@ -295,9 +321,41 @@ export function ParticipantsDatabasePage() {
       </div>
 
       {!status.message ? (
-        <p className="participants-page__records-count">
-          Найдено записей: {visibleStudents.length} из {sortedStudents.length}
-        </p>
+        <>
+          <p className="participants-page__records-count">
+            Найдено записей: {visibleStudents.length} из {sortedStudents.length}. Страница {currentPage} из {totalPages}
+          </p>
+          {visibleStudents.length > PAGE_SIZE ? (
+            <nav className="participants-page__pagination" aria-label="Пагинация списка участников">
+              <button
+                className="participants-page__page-button"
+                type="button"
+                onClick={() => goToPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+              >
+                Назад
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  className={`participants-page__page-button ${page === currentPage ? 'participants-page__page-button--active' : ''}`}
+                  type="button"
+                  onClick={() => goToPage(page)}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                className="participants-page__page-button"
+                type="button"
+                onClick={() => goToPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Вперёд
+              </button>
+            </nav>
+          ) : null}
+        </>
       ) : null}
     </div>
   );

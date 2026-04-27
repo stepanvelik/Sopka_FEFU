@@ -273,6 +273,43 @@
   font-size: 0.93rem;
 }
 
+.participants-page__pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.participants-page__page-button {
+  min-width: 38px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid #c7d6e6;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #204467;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.participants-page__page-button:hover:enabled,
+.participants-page__page-button:focus-visible:enabled {
+  background: #edf4fb;
+  border-color: #8fb2d5;
+}
+
+.participants-page__page-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.participants-page__page-button--active {
+  border-color: #1c63b7;
+  background: #1c63b7;
+  color: #ffffff;
+}
+
 .participants-page__status--loading {
   color: #33485c;
   background: #eef4fb;
