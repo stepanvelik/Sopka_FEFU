@@ -439,6 +439,9 @@ export function ParticipantRegistrationPage() {
           На главную
         </a>
         <h1 className="registration-page__title">Регистрация</h1>
+        <a className="registration-page__import-link" href="#import">
+          Перейти к загрузке из файла
+        </a>
       </div>
 
       <form className="registration-page__form" onSubmit={handleSubmit}>

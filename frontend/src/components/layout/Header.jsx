@@ -12,7 +12,10 @@ function UniversityMark() {
 export function Header() {
   return (
     <header className="header">
-      <UniversityMark />
+      <div className="header__left">
+        <UniversityMark />
+        <span className="header__title">Учёт занятости студентов в отряде ДВФУ</span>
+      </div>
       <a className="header__logout" href="#logout">
         Выход
       </a>

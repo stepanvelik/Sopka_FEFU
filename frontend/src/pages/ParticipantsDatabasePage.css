@@ -62,6 +62,8 @@
 }
 
 .participants-page__row {
+  width: calc(100% - 10px);
+  margin: 0 auto;
   border: 1px solid #cdd9e7;
   border-radius: 8px;
   background: #f8fbff;
@@ -73,6 +75,7 @@
 }
 
 .participants-page__summary {
+  appearance: none;
   width: 100%;
   min-height: 72px;
   display: flex;
@@ -81,6 +84,7 @@
   gap: 16px;
   padding: 16px 20px;
   border: 0;
+  border-radius: 0;
   background: transparent;
   color: #1f3347;
   text-align: left;
@@ -91,6 +95,12 @@
 .participants-page__summary:focus-visible {
   background: #eef4fb;
   outline: none;
+}
+
+.participants-page__summary:hover .participants-page__chevron,
+.participants-page__summary:focus-visible .participants-page__chevron {
+  background: rgba(29, 93, 155, 0.08);
+  border-color: rgba(29, 93, 155, 0.18);
 }
 
 .participants-page__summary-main {
@@ -120,9 +130,20 @@
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: #e7f0fa;
+  background: transparent;
+  border: 1px solid transparent;
   color: #1d5d9b;
-  font-size: 1.1rem;
+  transition: transform 0.28s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.participants-page__chevron svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .participants-page__details {
@@ -132,10 +153,41 @@
   padding: 0 20px 20px;
 }
 
+.participants-page__details-wrapper {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: max-height 0.34s ease, opacity 0.24s ease;
+}
+
+.participants-page__details-wrapper--open {
+  max-height: 2400px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.participants-page__details-wrapper > .participants-page__details {
+  overflow: visible;
+}
+
+.participants-page__row--open .participants-page__chevron {
+  transform: rotate(180deg);
+  background: #dbeafe;
+  border-color: #9dc3eb;
+}
+
+.participants-page__row--open .participants-page__summary:hover .participants-page__chevron,
+.participants-page__row--open .participants-page__summary:focus-visible .participants-page__chevron {
+  background: #dbeafe;
+  border-color: #9dc3eb;
+}
+
 .participants-page__details-actions {
   grid-column: 1 / -1;
   display: flex;
   justify-content: flex-end;
+  margin-top: 8px;
 }
 
 .participants-page__edit-link {
@@ -213,6 +265,12 @@
   border-radius: 8px;
   color: #33485c;
   background: #eef4fb;
+}
+
+.participants-page__records-count {
+  margin: 4px 0 0;
+  color: #4f6478;
+  font-size: 0.93rem;
 }
 
 .participants-page__status--loading {

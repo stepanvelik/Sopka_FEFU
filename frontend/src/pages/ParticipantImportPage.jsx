@@ -88,6 +88,9 @@ export function ParticipantImportPage() {
 
   return (
     <div className="participant-import-page">
+      <a className="participant-import-page__back-link" href="#">
+        На главную
+      </a>
       <h1 className="participant-import-page__title">Загрузка участников из файла</h1>
 
       <form className="participant-import-page__form" onSubmit={handleSubmit}>
@@ -186,6 +189,7 @@ export function ParticipantImportPage() {
         </div>
       </form>
 
+      <h2 className="participant-import-page__log-title">Журнал выполнения импорта</h2>
       <section className="participant-import-page__log-panel" aria-label="Логи импорта">
         {error ? <p className="participant-import-page__log-error">{error}</p> : null}
         {summary ? (

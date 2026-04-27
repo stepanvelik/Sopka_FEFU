@@ -11,6 +11,14 @@
   font-weight: 400;
 }
 
+.participant-import-page__back-link {
+  width: fit-content;
+  margin: -6px 0 -16px;
+  color: #3d6ca6;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
 .participant-import-page__form {
   margin: 0;
 }
@@ -196,6 +204,13 @@
   cursor: not-allowed;
   opacity: 0.6;
   transform: none;
+}
+
+.participant-import-page__log-title {
+  margin: -4px 0 0;
+  color: #1f4f84;
+  font-size: 1.08rem;
+  font-weight: 500;
 }
 
 /* ── Log panel ────────────────────────────────────────────── */

@@ -164,11 +164,13 @@ function ParticipantRow({ student, isOpen, onToggle }) {
           <span className="participants-page__birth">Дата рождения: {formatDate(student.birth_date)}</span>
         </span>
         <span className="participants-page__chevron" aria-hidden="true">
-          {isOpen ? '⌃' : '⌄'}
+          <svg viewBox="0 0 20 20" focusable="false">
+            <path d="M6 8L10 12L14 8" />
+          </svg>
         </span>
       </button>
 
-      {isOpen ? (
+      <div className={`participants-page__details-wrapper ${isOpen ? 'participants-page__details-wrapper--open' : ''}`}>
         <div className="participants-page__details">
           <div className="participants-page__details-actions">
             <a className="participants-page__edit-link" href={`#edit/${student.student_id}`}>
@@ -198,7 +200,7 @@ function ParticipantRow({ student, isOpen, onToggle }) {
             ))}
           </section>
         </div>
-      ) : null}
+      </div>
     </article>
   );
 }
@@ -291,6 +293,12 @@ export function ParticipantsDatabasePage() {
           />
         ))}
       </div>
+
+      {!status.message ? (
+        <p className="participants-page__records-count">
+          Найдено записей: {visibleStudents.length} из {sortedStudents.length}
+        </p>
+      ) : null}
     </div>
   );
 }
