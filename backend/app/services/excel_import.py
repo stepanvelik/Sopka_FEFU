@@ -93,7 +93,28 @@ class ExcelImportService:
         "bank_name": ["банк", "bank_name", "bank", "наименование банка", "название банка"],
         "bik": ["бик", "bik", "bik code", "бик банка"],
         "correspondent_account": ["корреспондентский счет", "correspondent_account", "корр. счет", "к/с"],
-        "account_number": ["номер счета", "account_number", "account number", "расчетный счет", "р/с", "счет"],
+        "account_number": [
+            "номер счета",
+            "номер банковского счета",
+            "банковский счет",
+            "account_number",
+            "account number",
+            "расчетный счет",
+            "р/с",
+            "счет",
+        ],
+    }
+    FIELD_KEYWORDS = {
+        "last_name": ["фам", "surname", "last"],
+        "first_name": ["имя", "first", "name"],
+        "middle_name": ["отч", "patronymic", "middle"],
+        "birth_date": ["датарожд", "birth", "dob"],
+        "institute": ["институт", "школ", "faculty", "institute"],
+        "study_group": ["груп", "studygroup", "group"],
+        "bank_name": ["банк", "bank"],
+        "bik": ["бик", "bik"],
+        "correspondent_account": ["корр", "correspondent", "ks"],
+        "account_number": ["номерсчет", "банковскогосчет", "расчет", "accountnumber", "rs", "счет"],
     }
 
     def __init__(self) -> None:
@@ -158,23 +179,45 @@ class ExcelImportService:
         return result
 
     def _detect_columns(self, df: pd.DataFrame) -> dict[str, str]:
-        excel_cols_lower = [str(c).strip().lower() for c in df.columns]
+        excel_cols = [str(c) for c in df.columns]
+        excel_cols_norm = [self._normalize_header(c) for c in excel_cols]
         mapping: dict[str, str] = {}
         found = set()
         for db_field, aliases in self.COLUMN_ALIASES.items():
             for alias in aliases:
-                alias_l = alias.lower()
-                if alias_l in excel_cols_lower:
-                    idx = excel_cols_lower.index(alias_l)
-                    original_name = str(df.columns[idx])
+                alias_l = self._normalize_header(alias)
+                if alias_l in excel_cols_norm:
+                    idx = excel_cols_norm.index(alias_l)
+                    original_name = excel_cols[idx]
                     mapping[original_name] = db_field
                     found.add(db_field)
                     break
+
+        # Fallback: эвристика по ключевым словам для "грязных" названий колонок.
+        for idx, col in enumerate(excel_cols):
+            if col in mapping:
+                continue
+            norm_col = excel_cols_norm[idx]
+            guessed = self._guess_field_by_keywords(norm_col)
+            if guessed and guessed not in found:
+                mapping[col] = guessed
+                found.add(guessed)
         missing_required = [field for field in self.REQUIRED_FIELDS if field not in found]
         if missing_required:
             msg = ", ".join(missing_required)
             raise ValueError(f"В файле отсутствуют обязательные колонки: {msg}")
         return mapping
+
+    def _normalize_header(self, value: str) -> str:
+        lowered = str(value).strip().lower()
+        return "".join(ch for ch in lowered if ch.isalnum())
+
+    def _guess_field_by_keywords(self, normalized_column: str) -> str | None:
+        for field, keywords in self.FIELD_KEYWORDS.items():
+            for kw in keywords:
+                if kw in normalized_column:
+                    return field
+        return None
 
     def _get_excel_column(self, db_field: str) -> str | None:
         for ex_col, db_col in self.column_mapping.items():
