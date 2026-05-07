@@ -1,0 +1,94 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 24px 12px;
+  background: #1c63b7;
+  border-radius: 2px;
+  box-shadow: 0 3px 8px rgba(10, 56, 105, 0.28);
+}
+
+.header__left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.header__title {
+  color: #ffffff;
+  font-size: clamp(0.95rem, 1.2vw, 1.15rem);
+  font-weight: 500;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.university-mark {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+}
+
+.university-mark__logo {
+  display: block;
+  width: min(100%, 188px);
+  height: auto;
+  max-height: 48px;
+  object-fit: contain;
+}
+
+.header__logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 122px;
+  padding: 11px 18px;
+  border: 1px solid #d2dceb;
+  background: #ffffff;
+  color: #0c5ea6;
+  font-size: 1rem;
+  font-weight: 400;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.header__logout:hover,
+.header__logout:focus-visible {
+  background: #edf4fb;
+  color: #084f8b;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header__left {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header__title {
+    text-align: center;
+    white-space: normal;
+  }
+
+  .university-mark {
+    justify-content: center;
+  }
+
+  .university-mark__logo {
+    width: min(100%, 176px);
+    max-height: 44px;
+  }
+
+  .header__logout {
+    width: 100%;
+  }
+}
