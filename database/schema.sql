@@ -31,7 +31,7 @@ create table if not exists students (
     study_group varchar(50) not null,
     institute varchar(255) not null,
 
-    phone varchar(30),
+    phone bigint not null,
     email varchar(255), -- может использоваться как корпоративная почта
     corporate_email varchar(255), -- если нужно отдельно хранить корпоративную почту
 
@@ -52,8 +52,11 @@ create table if not exists students (
     created_at timestamp not null default now(),
     updated_at timestamp not null default now(),
 
+    constraint uq_students_phone unique (phone),
+    constraint uq_students_passport unique (passport_series, passport_number),
     constraint uq_students_snils unique (snils),
     constraint uq_students_inn unique (inn),
+    constraint ck_students_phone check (phone > 0),
     constraint ck_students_email check (email is null or position('@' in email) > 1),
     constraint ck_students_corporate_email check (corporate_email is null or position('@' in corporate_email) > 1),
     constraint ck_students_birth_date check (birth_date <= current_date),
@@ -109,13 +112,25 @@ create table if not exists signers (
     is_active boolean not null default true
 );
 
+-- Справочник типов мероприятий
+create table if not exists event_types (
+    event_type_id bigserial primary key,
+    event_type_name varchar(255) not null,
+    description text,
+    is_active boolean not null default true,
+    created_at timestamp not null default now(),
+
+    constraint uq_event_types_name unique (event_type_name),
+    constraint ck_event_types_name_not_blank check (btrim(event_type_name) <> '')
+);
+
 -- Справочник мероприятий
 create table if not exists events (
     event_id bigserial primary key,
     event_name varchar(500) not null,
     event_level varchar(50) not null,
+    event_type_id bigint,
     organizer_name varchar(255),
-    organization_id bigint references organizations(organization_id) on delete set null,
 
     start_date date not null,
     end_date date,
@@ -124,13 +139,19 @@ create table if not exists events (
 
     participants_planned integer,
     duration_hours numeric(6,2),
+    event_comment text,
 
     created_at timestamp not null default now(),
 
     constraint ck_events_dates check (end_date is null or end_date >= start_date),
     constraint ck_events_participants check (participants_planned is null or participants_planned >= 0),
-    constraint ck_events_duration check (duration_hours is null or duration_hours >= 0)
+    constraint ck_events_duration check (duration_hours is null or duration_hours >= 0),
+    constraint fk_events_event_type foreign key (event_type_id)
+        references event_types(event_type_id) on delete restrict
 );
+
+create index if not exists ix_events_event_type
+    on events(event_type_id);
 
 -- Факты участия студентов в мероприятиях
 create table if not exists event_participation (
@@ -138,19 +159,71 @@ create table if not exists event_participation (
     student_id bigint not null references students(student_id) on delete cascade,
     event_id bigint not null references events(event_id) on delete cascade,
 
-    participation_date date,
     role_name varchar(100) not null,
-    participation_hours numeric(6,2),
     participation_status varchar(50),
     notes text,
 
     created_at timestamp not null default now(),
+    updated_at timestamp not null default now(),
 
-    constraint uq_event_participation unique (student_id, event_id, role_name),
-    constraint ck_event_participation_hours check (
-        participation_hours is null or participation_hours >= 0
+    constraint uq_event_participation unique (student_id, event_id, role_name)
+);
+
+-- Конкретные даты и интервалы участия студента в мероприятии
+create table if not exists event_participation_time_slots (
+    participation_time_slot_id bigserial primary key,
+    participation_id bigint not null references event_participation(participation_id) on delete cascade,
+
+    participation_date date not null,
+    start_time time not null,
+    end_time time not null,
+    participation_hours numeric(6,2) not null,
+    notes text,
+
+    created_at timestamp not null default now(),
+
+    constraint uq_event_participation_time_slot unique (
+        participation_id,
+        participation_date,
+        start_time,
+        end_time
+    ),
+    constraint ck_event_participation_time_slot_times check (end_time > start_time),
+    constraint ck_event_participation_time_slot_hours check (
+        participation_hours > 0 and participation_hours <= 24
     )
 );
+
+create index if not exists ix_event_participation_student
+    on event_participation(student_id);
+
+create index if not exists ix_event_participation_event
+    on event_participation(event_id);
+
+create index if not exists ix_event_participation_time_slots_date
+    on event_participation_time_slots(participation_date);
+
+-- Сводные данные по участию для справок и отчетов
+create or replace view event_participation_summary as
+select
+    ep.participation_id,
+    ep.student_id,
+    ep.event_id,
+    ep.role_name,
+    ep.participation_status,
+    min(epts.participation_date) as first_participation_date,
+    max(epts.participation_date) as last_participation_date,
+    count(epts.participation_time_slot_id) as participation_time_slots_count,
+    coalesce(sum(epts.participation_hours), 0)::numeric(8,2) as total_participation_hours
+from event_participation ep
+left join event_participation_time_slots epts
+    on epts.participation_id = ep.participation_id
+group by
+    ep.participation_id,
+    ep.student_id,
+    ep.event_id,
+    ep.role_name,
+    ep.participation_status;
 
 -- Справки об участии в мероприятии
 create table if not exists participation_certificates (
