@@ -35,5 +35,5 @@ class EventParticipation(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint("student_id", "event_id", "role_name", name="uq_event_participation"),
+        UniqueConstraint("student_id", "event_id", name="uq_event_participation"),
     )

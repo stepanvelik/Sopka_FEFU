@@ -167,7 +167,7 @@ create table if not exists event_participation (
     created_at timestamp not null default now(),
     updated_at timestamp not null default now(),
 
-    constraint uq_event_participation unique (student_id, event_id, role_name)
+    constraint uq_event_participation unique (student_id, event_id)
 );
 
 -- Конкретные даты и интервалы участия студента в мероприятии
