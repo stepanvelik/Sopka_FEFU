@@ -9,10 +9,6 @@
   margin: 0 auto;
 }
 
-.event-details__container--wide {
-  max-width: 1200px;
-}
-
 .back-link {
   background: none;
   border: none;
@@ -30,7 +26,6 @@
   text-decoration: underline;
 }
 
-/* Верхний блок - Информация о мероприятии */
 .event-info-block {
   background: rgba(0, 91, 170, 0.05);
   border-radius: 16px;
@@ -69,7 +64,6 @@
   font-weight: 600;
 }
 
-/* Нижний блок - Участники */
 .participants-block {
   background: white;
   border-radius: 16px;
@@ -84,15 +78,58 @@
   margin: 0 0 12px 0;
 }
 
-.participants-block__hint {
-  margin: 0 0 20px 0;
-  color: #64748b;
-  font-size: 0.9rem;
-  padding-bottom: 16px;
+.participants-filter {
+  margin-bottom: 20px;
+  padding-bottom: 18px;
   border-bottom: 2px solid #eef2f6;
 }
 
-/* Маленькие блоки (Организаторы, Исполнители и т.д.) -*/
+.participants-filter__title {
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a2a4f;
+}
+
+.participants-filter__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.participants-filter__all,
+.participants-filter__option {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(0, 91, 170, 0.18);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1a2a4f;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 10px;
+}
+
+.participants-filter__all {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.participants-filter__all--active {
+  background: #005BAA;
+  color: #ffffff;
+}
+
+.participants-filter__option {
+  cursor: pointer;
+}
+
+.participants-filter__option input {
+  accent-color: #005BAA;
+}
+
 .participant-group {
   margin-bottom: 16px;
   background: rgba(0, 91, 170, 0.05);
@@ -161,7 +198,7 @@
   border-top: 1px solid rgba(0, 91, 170, 0.1);
   padding: 12px;
 }
-/* Карточка участника */
+
 .participant-item {
   display: flex;
   align-items: center;
@@ -203,76 +240,18 @@
   text-align: right;
 }
 
-/* Кнопка + */
-.participant-item__plus-btn {
-  width: 28px;
-  height: 28px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border-radius: 6px;
-  transition: background 0.2s;
-}
-
-.participant-item__plus-btn:hover {
-  background: rgba(0, 91, 170, 0.1);
-}
-
-.participant-item__plus-horizontal {
-  position: absolute;
-  width: 14px;
-  height: 2px;
-  background: #005BAA;
-  border-radius: 2px;
-}
-
-.participant-item__plus-vertical {
-  position: absolute;
-  width: 2px;
-  height: 14px;
-  background: #005BAA;
-  border-radius: 2px;
-}
-
-/* Мобильная версия -  */
-@media (max-width: 768px) {
-  .participant-item {
-    flex-wrap: wrap;
-  }
-
-  .participant-item__fio {
-    flex: 1;
-    order: 1;
-  }
-
-  .participant-item__phone {
-    flex: 100%;
-    text-align: left;
-    order: 2;
-    margin-left: 26px;
-  }
-
-  .participant-item__hours {
-    order: 3;
-    text-align: left;
-  }
-
-  .participant-item__plus-btn {
-    order: 4;
-    margin-left: auto;
-  }
-}
-
 .participant-group__empty {
   padding: 24px;
   text-align: center;
   color: #8b9eb0;
   font-size: 14px;
+}
+
+.participant-group__empty-role {
+  padding: 16px 20px;
+  color: #6c7a8e;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .loading {
@@ -282,64 +261,6 @@
   color: #6c7a8e;
 }
 
-.gantt-block {
-  margin-top: 30px;
-  padding: 24px;
-  background: #ffffff;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-}
-
-.gantt-block__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
-.gantt-block__title {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  color: #005baa;
-}
-
-.gantt-block__actions {
-  display: flex;
-  gap: 8px;
-}
-
-.gantt-block__btn {
-  padding: 8px 14px;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.gantt-block__btn--secondary {
-  background: #e8f1fa;
-  color: #005baa;
-}
-
-.gantt-block__btn--danger {
-  background: #fde9e7;
-  color: #8c2f28;
-}
-
-.gantt-block__empty {
-  margin: 0;
-  padding: 24px;
-  text-align: center;
-  color: #64748b;
-  background: #f8fafc;
-  border-radius: 8px;
-}
-
-/* Мобильная версия */
 @media (max-width: 768px) {
   .event-details-page {
     padding: 16px;
@@ -381,33 +302,20 @@
   }
 
   .participant-item {
+    flex-wrap: wrap;
     padding: 10px 12px;
   }
-}
-/* Кнопка - (удалить из диаграммы) */
-.participant-item__minus-btn {
-  width: 28px;
-  height: 28px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border-radius: 6px;
-  transition: background 0.2s;
-}
 
-.participant-item__minus-btn:hover {
-  background: rgba(0, 91, 170, 0.1);
-}
+  .participant-item__fio {
+    flex: 1 1 100%;
+  }
 
-.participant-item__minus-horizontal {
-  position: absolute;
-  width: 14px;
-  height: 2px;
-  background: #e74c3c;
-  border-radius: 2px;
+  .participant-item__hours-block {
+    justify-content: flex-start;
+  }
+
+  .participant-item__phone {
+    flex: 1 1 auto;
+    text-align: left;
+  }
 }
