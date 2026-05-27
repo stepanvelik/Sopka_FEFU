@@ -11,6 +11,7 @@ import { EventStatisticsPage } from './pages/EventStatisticsPage.jsx';
 import { EventCreatePage } from './pages/EventCreatePage.jsx';
 import { EventsListPage } from './pages/EventsListPage.jsx';
 import { EventEditPage } from './pages/EventEditPage.jsx';
+import { DocumentsSpravkiPage } from './pages/DocumentsSpravkiPage.jsx';
 import EventDetailsPage from './pages/EventDetailsPage.jsx';
 import './styles/app.css';
 
@@ -84,6 +85,7 @@ export default function App() {
   const isParticipantsSummaryPage = route === 'participants-summary';
   const isStudentEventsPage = route === 'student-events';
   const isEventStatisticsPage = route === 'event-statistics';
+  const isDocumentsSpravkiPage = route === 'documents-spravki';
 
   const isWidePage =
     route === 'create' ||
@@ -92,6 +94,7 @@ export default function App() {
     route === 'participants-summary' ||
     route === 'student-events' ||
     route === 'event-statistics' ||
+    route === 'documents-spravki' ||
     route === 'create-event' ||
     route === 'events-list' ||
     isEditEventPage ||
@@ -105,6 +108,7 @@ export default function App() {
     route !== 'participants-summary' &&
     route !== 'student-events' &&
     route !== 'event-statistics' &&
+    route !== 'documents-spravki' &&
     route !== 'create-event' &&
     route !== 'events-list' &&
     route !== 'edit-event' &&
@@ -113,7 +117,7 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <Header />
+      <Header route={route} />
       <main className={`app-content ${isWidePage ? 'app-content--wide' : ''}`}>
         {route === 'create' ? <ParticipantRegistrationPage /> : null}
         {route === 'import' ? <ParticipantImportPage /> : null}
@@ -121,6 +125,7 @@ export default function App() {
         {isParticipantsSummaryPage ? <ParticipantsSummaryPage /> : null}
         {isStudentEventsPage ? <StudentEventsPage /> : null}
         {isEventStatisticsPage ? <EventStatisticsPage /> : null}
+        {isDocumentsSpravkiPage ? <DocumentsSpravkiPage /> : null}
         {isEditParticipantPage ? <ParticipantEditPage studentId={participantEditId} /> : null}
 
         {route === 'events-list' ? <EventsListPage /> : null}

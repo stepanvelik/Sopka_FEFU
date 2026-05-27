@@ -37,8 +37,8 @@
 
 /* Блок мероприятия */
 .form-section {
-  background: #eef4fb;
-  border-radius: 12px;
+  background: var(--app-color-soft);
+  border-radius: var(--app-radius-md);
   padding: 24px;
 }
 
@@ -73,8 +73,8 @@
   min-height: 42px;
   padding: 10px 14px;
   border: 1px solid #b8c6d7;
-  border-radius: 8px;
-  background: #ffffff;
+  border-radius: var(--app-radius-sm);
+  background: var(--app-color-page);
   font-family: inherit;
   font-size: 0.95rem;
   color: #22384a;
@@ -102,8 +102,8 @@ textarea.events-form__control {
 
 /* Блок участников */
 .participants-section {
-  background: #eef4fb;
-  border-radius: 12px;
+  background: var(--app-color-soft);
+  border-radius: var(--app-radius-md);
   padding: 24px;
 }
 
@@ -436,6 +436,13 @@ textarea.events-form__control {
   border-radius: 6px;
   border: 1px solid #e0ecf5;
   font-size: 0.95rem;
+}
+
+.event-view-modal__hero {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
 }
 
 @media (max-width: 720px) {

@@ -319,6 +319,53 @@ export async function downloadStudentSpravka({
   return { blob, filename };
 }
 
+export async function downloadEventSpravkiArchive({
+  eventId,
+  roleName = '',
+  dateFrom = '',
+  dateTo = '',
+  studentIds = [],
+} = {}) {
+  const params = new URLSearchParams();
+
+  if (roleName) {
+    params.set('role_name', roleName);
+  }
+  if (dateFrom) {
+    params.set('date_from', dateFrom);
+  }
+  if (dateTo) {
+    params.set('date_to', dateTo);
+  }
+  studentIds.forEach((studentId) => {
+    params.append('student_ids', String(studentId));
+  });
+
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  const response = await fetch(`${API_BASE_URL}/reports/events/${eventId}/spravki.zip${suffix}`);
+  if (!response.ok) {
+    let message = 'Не удалось сформировать архив справок.';
+    try {
+      const payload = await response.json();
+      if (typeof payload?.detail === 'string') {
+        message = payload.detail;
+      }
+    } catch {
+      // Keep fallback message for non-JSON errors.
+    }
+    throw new Error(message);
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get('Content-Disposition') || '';
+  const utfMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+  const plainMatch = disposition.match(/filename="?([^";]+)"?/i);
+  const rawName = utfMatch?.[1] || plainMatch?.[1] || 'Справки.zip';
+  const filename = decodeURIComponent(rawName);
+
+  return { blob, filename };
+}
+
 export { API_BASE_URL };
 
 

@@ -120,30 +120,20 @@ export function EventViewModal({ event, onClose }) {
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="event-create-page" style={{ padding: 0 }}>
-          <div className="event-create-page__hero" style={{ 
-            display: 'flex', 
-            flexDirection: 'row', 
-            justifyContent: 'space-between', 
-            alignItems: 'center' 
-          }}>
+          <div className="event-create-page__hero event-view-modal__hero">
             <h1 className="event-create-page__title">Мероприятие</h1>
             
             <button 
-              className="modal-close-btn" 
+              type="button"
+              className="modal-close-btn app-icon-button app-icon-button--close" 
               onClick={onClose} 
               title="Закрыть"
-              style={{ 
-                position: 'static',
-                fontSize: '32px', 
-                padding: '0 10px'
-              }}
-            >
-              ✕
-            </button>
+              aria-label="Закрыть"
+            />
           </div>
 
           <div className="event-create-page__form">
-            <div className="form-section">
+            <div className="form-section app-panel">
               <div className="events-form__grid">
                 <div className="events-form__field">
                   <label className="events-form__label">Название</label>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { listEvents } from '../lib/api.js';
 import { formatEventScheduleSummary } from '../lib/eventScheduleUtils.js';
+import EventDetailsPage from './EventDetailsPage.jsx';
 import './EventStatisticsPage.css';
 
 function formatDate(value) {
@@ -17,9 +18,15 @@ function getEventDateLabel(event) {
   return end && end !== start ? `${start} — ${end}` : start;
 }
 
+function getInitialEventId() {
+  const raw = (window.location.hash || '').replace(/^#/, '');
+  const query = raw.includes('?') ? raw.slice(raw.indexOf('?') + 1) : '';
+  return new URLSearchParams(query).get('event_id') || '';
+}
+
 export function EventStatisticsPage() {
   const [events, setEvents] = useState([]);
-  const [selectedEventId, setSelectedEventId] = useState('');
+  const [selectedEventId, setSelectedEventId] = useState(getInitialEventId);
   const [status, setStatus] = useState({ type: 'loading', message: 'Загрузка списка мероприятий...' });
 
   useEffect(() => {
@@ -33,9 +40,10 @@ export function EventStatisticsPage() {
         const sorted = [...(rows || [])].sort((left, right) => {
           const leftDate = String(left.start_date || '');
           const rightDate = String(right.start_date || '');
-          return rightDate.localeCompare(leftDate) || String(left.event_name || '').localeCompare(String(right.event_name || ''), 'ru');
+          return leftDate.localeCompare(rightDate) || String(left.event_name || '').localeCompare(String(right.event_name || ''), 'ru');
         });
         setEvents(sorted);
+        setSelectedEventId((current) => current || (sorted[0] ? String(sorted[0].event_id) : ''));
         setStatus({ type: 'idle', message: '' });
       })
       .catch((error) => {
@@ -54,13 +62,6 @@ export function EventStatisticsPage() {
     };
   }, []);
 
-  function openStatistics() {
-    if (!selectedEventId) {
-      return;
-    }
-    window.location.hash = `event-details?id=${selectedEventId}`;
-  }
-
   const selectedEvent = events.find((event) => String(event.event_id) === String(selectedEventId));
 
   return (
@@ -68,7 +69,7 @@ export function EventStatisticsPage() {
       <PageHeader title="Статистика по мероприятию" />
 
       <p className="event-statistics-page__hint">
-        Выберите мероприятие, чтобы открыть информацию об участниках и диаграмму занятости.
+        Выберите мероприятие, чтобы открыть информацию об участниках, ролях и часах участия.
       </p>
 
       {status.message ? (
@@ -84,25 +85,26 @@ export function EventStatisticsPage() {
       {events.length > 0 ? (
         <div className="event-statistics-page__panel">
           <label className="event-statistics-page__label" htmlFor="event-statistics-select">
-            Мероприятие
+            <span>Мероприятие</span>
+            <select
+              id="event-statistics-select"
+              className="event-statistics-page__select"
+              value={selectedEventId}
+              onChange={(event) => setSelectedEventId(event.target.value)}
+            >
+              <option value="">Выберите мероприятие</option>
+              {events.map((event) => (
+                <option key={event.event_id} value={String(event.event_id)}>
+                  {event.event_name} ({getEventDateLabel(event)})
+                </option>
+              ))}
+            </select>
           </label>
-          <select
-            id="event-statistics-select"
-            className="event-statistics-page__select"
-            value={selectedEventId}
-            onChange={(event) => setSelectedEventId(event.target.value)}
-          >
-            <option value="">Выберите мероприятие</option>
-            {events.map((event) => (
-              <option key={event.event_id} value={String(event.event_id)}>
-                {event.event_name} ({getEventDateLabel(event)})
-              </option>
-            ))}
-          </select>
 
           {selectedEvent ? (
             <div className="event-statistics-page__preview">
               <div><strong>Уровень:</strong> {selectedEvent.event_level || '—'}</div>
+              <div><strong>Тип:</strong> {selectedEvent.event_type_name || '—'}</div>
               <div>
                 <strong>Расписание:</strong>{' '}
                 {formatEventScheduleSummary(selectedEvent) || getEventDateLabel(selectedEvent) || '—'}
@@ -110,15 +112,18 @@ export function EventStatisticsPage() {
             </div>
           ) : null}
 
-          <button
-            type="button"
-            className="event-statistics-page__open-btn"
-            onClick={openStatistics}
-            disabled={!selectedEventId}
+          <a
+            className={`event-statistics-page__docs-link${selectedEventId ? '' : ' event-statistics-page__docs-link--disabled'}`}
+            href={selectedEventId ? `#documents-spravki?event_id=${selectedEventId}` : '#event-statistics'}
+            aria-disabled={!selectedEventId}
           >
-            Открыть статистику
-          </button>
+            Перейти к документам мероприятия
+          </a>
         </div>
+      ) : null}
+
+      {selectedEventId ? (
+        <EventDetailsPage eventId={selectedEventId} embedded />
       ) : null}
 
       <div className="event-statistics-page__back-link">

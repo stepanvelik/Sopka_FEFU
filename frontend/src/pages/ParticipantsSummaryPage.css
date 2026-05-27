@@ -14,6 +14,29 @@
   font-size: 0.96rem;
 }
 
+.summary-page__export {
+  min-height: 38px;
+  padding: 0 14px;
+  border: none;
+  border-radius: var(--app-radius-sm);
+  background: var(--app-color-primary);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.summary-page__export:hover:not(:disabled),
+.summary-page__export:focus-visible {
+  background: var(--app-color-primary-hover);
+  outline: none;
+}
+
+.summary-page__export:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .summary-page__status,
 .summary-page__empty {
   margin: 0;
@@ -98,7 +121,14 @@
 }
 
 .summary-page__event-name {
+  color: var(--app-color-primary);
   font-weight: 500;
+  text-decoration: underline;
+}
+
+.summary-page__student-link {
+  color: var(--app-color-primary);
+  font-weight: 600;
 }
 
 .summary-page__event-meta {

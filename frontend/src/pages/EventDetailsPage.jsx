@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { getEvent, getStudent, listEventParticipants } from '../lib/api';
 import { enumerateEventDates, formatRuDateShort } from '../lib/eventScheduleUtils.js';
 import { formatPhone, getStudentFullName } from '../lib/participantUtils.js';
-import { downloadSpravkaForStudent } from '../lib/spravkaUtils.js';
 import '../components/EventParticipantFields.css';
 import './EventDetailsPage.css';
 
@@ -44,15 +43,14 @@ function participantMatchesDates(participant, selectedDates, hasDateFilter) {
   return slots.some((slot) => selected.has(String(slot.participation_date || '').slice(0, 10)));
 }
 
-const EventDetailsPage = ({ eventId }) => {
+const EventDetailsPage = ({ eventId, embedded = false }) => {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [participations, setParticipations] = useState([]);
   const [studentsCache, setStudentsCache] = useState([]);
   const [selectedDates, setSelectedDates] = useState([]);
-  const [spravkaLoadingStudentId, setSpravkaLoadingStudentId] = useState(null);
-  const [spravkaError, setSpravkaError] = useState('');
   const [expandedSections, setExpandedSections] = useState({
+    leaders: true,
     organizers: true,
     executors: true,
     volunteers: false,
@@ -115,25 +113,6 @@ const EventDetailsPage = ({ eventId }) => {
     }));
   };
 
-  async function handleCreateSpravka(participant) {
-    if (!eventId || !participant?.student_id) {
-      return;
-    }
-
-    setSpravkaLoadingStudentId(participant.student_id);
-    setSpravkaError('');
-    try {
-      await downloadSpravkaForStudent({
-        studentId: participant.student_id,
-        eventId,
-      });
-    } catch (err) {
-      setSpravkaError(err instanceof Error ? err.message : 'Не удалось сформировать справку.');
-    } finally {
-      setSpravkaLoadingStudentId(null);
-    }
-  }
-
   const toggleDate = (date) => {
     setSelectedDates((prev) => (
       prev.includes(date)
@@ -166,17 +145,19 @@ const EventDetailsPage = ({ eventId }) => {
   const filteredParticipations = participations.filter((item) => participantMatchesDates(item, selectedDates, hasDateFilter));
   const emptyTextSuffix = allDatesSelected ? 'на мероприятии' : 'за выбранные дни';
 
+  const leaders = filteredParticipations.filter((item) => isRole(item, ['руководитель', 'leader']));
   const organizers = filteredParticipations.filter((item) => isRole(item, ['организатор', 'organizer']));
   const executors = filteredParticipations.filter((item) => isRole(item, ['исполнитель', 'executor']));
   const volunteers = filteredParticipations.filter((item) => isRole(item, ['волонтер', 'волонтёр', 'volunteer']));
   const participants = filteredParticipations.filter((item) => isRole(item, ['участник', 'participant']));
   const knownIds = new Set(
-    [...organizers, ...executors, ...volunteers, ...participants]
+    [...leaders, ...organizers, ...executors, ...volunteers, ...participants]
       .map((item) => item.participation_id)
   );
   const other = filteredParticipations.filter((item) => !knownIds.has(item.participation_id));
 
   const baseSections = [
+    { key: 'leaders', title: 'Руководители', data: leaders, emptyText: `Нет руководителей ${emptyTextSuffix}` },
     { key: 'organizers', title: 'Организаторы', data: organizers, emptyText: `Нет организаторов ${emptyTextSuffix}` },
     { key: 'executors', title: 'Исполнители', data: executors, emptyText: `Нет исполнителей ${emptyTextSuffix}` },
     { key: 'volunteers', title: 'Волонтеры', data: volunteers, emptyText: `Нет волонтеров ${emptyTextSuffix}` },
@@ -189,13 +170,21 @@ const EventDetailsPage = ({ eventId }) => {
   ];
 
   const totalParticipants = participations.length;
+  const totalFilteredHours = filteredParticipations.reduce(
+    (sum, item) => sum + sumParticipationHours(item, selectedDates, hasDateFilter),
+    0,
+  );
+  const activeRoleGroups = baseSections.filter((section) => section.data.length > 0).length + (other.length > 0 ? 1 : 0);
+  const eventTypeLabel = event.event_type_name || event.event_type?.event_type_name || 'Тип не указан';
 
   return (
-    <div className="event-details-page">
+    <div className={`event-details-page${embedded ? ' event-details-page--embedded' : ''}`}>
       <div className="event-details__container">
-        <button type="button" className="back-link" onClick={goBack}>
-          ← Вернуться к списку мероприятий
-        </button>
+        {!embedded ? (
+          <button type="button" className="back-link" onClick={goBack}>
+            ← Вернуться к списку мероприятий
+          </button>
+        ) : null}
 
         <div className="event-info-block">
           <h1 className="event-info-block__title">Информация о мероприятии</h1>
@@ -209,7 +198,7 @@ const EventDetailsPage = ({ eventId }) => {
           </div>
           <div className="event-info-block__row">
             <div className="event-info-block__label">Тип</div>
-            <div className="event-info-block__value">{event.event_type?.event_type_name || 'Тип не указан'}</div>
+            <div className="event-info-block__value">{eventTypeLabel}</div>
           </div>
           <div className="event-info-block__row">
             <div className="event-info-block__label">Дата начала</div>
@@ -221,14 +210,44 @@ const EventDetailsPage = ({ eventId }) => {
             <div className="event-info-block__label">Количество участников</div>
             <div className="event-info-block__value">{totalParticipants}</div>
           </div>
+          {event.event_comment ? (
+            <div className="event-info-block__row event-info-block__row--comment">
+              <div className="event-info-block__label">Описание</div>
+              <div className="event-info-block__value">{event.event_comment}</div>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="event-stats-strip">
+          <div className="event-stats-strip__item">
+            <span className="event-stats-strip__value">{totalParticipants}</span>
+            <span className="event-stats-strip__label">участников</span>
+          </div>
+          <div className="event-stats-strip__item">
+            <span className="event-stats-strip__value">
+              {totalFilteredHours.toLocaleString('ru-RU', { maximumFractionDigits: 2 })}
+            </span>
+            <span className="event-stats-strip__label">часов</span>
+          </div>
+          <div className="event-stats-strip__item">
+            <span className="event-stats-strip__value">{activeRoleGroups}</span>
+            <span className="event-stats-strip__label">ролей</span>
+          </div>
+          <div className="event-stats-strip__item">
+            <span className="event-stats-strip__value">{selectedDates.length || eventDates.length || 1}</span>
+            <span className="event-stats-strip__label">дней</span>
+          </div>
         </div>
 
         <div className="participants-block">
-          <h2 className="participants-block__title">Участники</h2>
-
-          {spravkaError ? (
-            <p className="participants-block__spravka-error">{spravkaError}</p>
-          ) : null}
+          <div className="participants-block__top">
+            <h2 className="participants-block__title">Участники</h2>
+            {!embedded ? (
+              <a className="participants-block__documents-link" href={`#documents-spravki?event_id=${eventId}`}>
+                Перейти к документам мероприятия
+              </a>
+            ) : null}
+          </div>
 
           {eventDates.length > 0 && (
             <div className="participants-filter">
@@ -305,16 +324,6 @@ const EventDetailsPage = ({ eventId }) => {
                               <span>{sumParticipationHours(item, selectedDates, hasDateFilter) || 0} ч.</span>
                             </div>
                             <div className="participant-item__phone">{phone}</div>
-                            <button
-                              type="button"
-                              className="spravka-btn"
-                              disabled={String(spravkaLoadingStudentId) === String(item.student_id)}
-                              onClick={() => handleCreateSpravka(item)}
-                            >
-                              {String(spravkaLoadingStudentId) === String(item.student_id)
-                                ? 'Формирование...'
-                                : 'Создать справку'}
-                            </button>
                           </div>
                         );
                       })}

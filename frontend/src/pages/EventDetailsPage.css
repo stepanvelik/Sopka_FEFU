@@ -4,9 +4,18 @@
   padding: 30px;
 }
 
+.event-details-page--embedded {
+  min-height: auto;
+  padding: 0;
+}
+
 .event-details__container {
   max-width: 800px;
   margin: 0 auto;
+}
+
+.event-details-page--embedded .event-details__container {
+  max-width: none;
 }
 
 .back-link {
@@ -64,6 +73,42 @@
   font-weight: 600;
 }
 
+.event-info-block__row--comment .event-info-block__value {
+  max-width: 760px;
+  line-height: 1.45;
+  font-weight: 500;
+}
+
+.event-stats-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.event-stats-strip__item {
+  padding: 18px;
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-sm);
+  background: #ffffff;
+}
+
+.event-stats-strip__value {
+  display: block;
+  color: var(--app-color-text);
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.event-stats-strip__label {
+  display: block;
+  margin-top: 8px;
+  color: var(--app-color-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
 .participants-block {
   background: white;
   border-radius: 16px;
@@ -76,6 +121,33 @@
   font-weight: 600;
   color: #005BAA;
   margin: 0 0 12px 0;
+}
+
+.participants-block__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.participants-block__documents-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  background: #e8f1fa;
+  color: #005baa;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.participants-block__documents-link:hover,
+.participants-block__documents-link:focus-visible {
+  background: #d9eafa;
+  outline: none;
 }
 
 .participants-filter {
@@ -240,16 +312,6 @@
   text-align: right;
 }
 
-.participants-block__spravka-error,
-.participants-table__spravka-error {
-  margin: 0 0 12px;
-  padding: 10px 14px;
-  border-radius: 8px;
-  background: #fef2f2;
-  color: #b91c1c;
-  font-size: 0.9rem;
-}
-
 .participant-group__empty {
   padding: 24px;
   text-align: center;
@@ -286,6 +348,10 @@
 
   .participants-block {
     padding: 20px;
+  }
+
+  .event-stats-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .participants-block__title {
@@ -327,5 +393,11 @@
   .participant-item__phone {
     flex: 1 1 auto;
     text-align: left;
+  }
+}
+
+@media (max-width: 520px) {
+  .event-stats-strip {
+    grid-template-columns: 1fr;
   }
 }

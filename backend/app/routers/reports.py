@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import os
+import shutil
 import tempfile
+import zipfile
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -452,4 +454,90 @@ async def download_student_spravka(
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         filename=filename,
         background=BackgroundTask(lambda: output_path.unlink(missing_ok=True)),
+    )
+
+
+@router.get("/events/{event_id}/spravki.zip")
+async def download_event_spravki_archive(
+    event_id: int,
+    session: AsyncSession = Depends(get_session),
+    role_name: str | None = Query(None, max_length=100),
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
+    student_ids: list[int] | None = Query(None),
+) -> FileResponse:
+    if date_from and date_to and date_from > date_to:
+        raise HTTPException(status_code=422, detail="Дата начала периода не может быть позже даты окончания.")
+
+    event = await session.get(Event, event_id)
+    if event is None:
+        raise HTTPException(status_code=404, detail="Мероприятие не найдено.")
+
+    filters = [EventParticipation.event_id == event_id]
+    if role_name and role_name.strip():
+        filters.append(func.lower(EventParticipation.role_name) == role_name.strip().lower())
+    if student_ids:
+        filters.append(EventParticipation.student_id.in_(student_ids))
+    if date_from or date_to:
+        slot_filters = [EventParticipationTimeSlot.participation_id == EventParticipation.participation_id]
+        if date_from:
+            slot_filters.append(EventParticipationTimeSlot.participation_date >= date_from)
+        if date_to:
+            slot_filters.append(EventParticipationTimeSlot.participation_date <= date_to)
+        matching_slot_exists = select(EventParticipationTimeSlot.participation_time_slot_id).where(*slot_filters).exists()
+        any_slot_exists = (
+            select(EventParticipationTimeSlot.participation_time_slot_id)
+            .where(EventParticipationTimeSlot.participation_id == EventParticipation.participation_id)
+            .exists()
+        )
+        filters.append(or_(matching_slot_exists, ~any_slot_exists))
+
+    stmt = (
+        select(EventParticipation, Student)
+        .join(Student, Student.student_id == EventParticipation.student_id)
+        .where(*filters)
+        .order_by(Student.last_name, Student.first_name, Student.middle_name, Student.student_id)
+    )
+    result = await session.execute(stmt)
+    rows = result.all()
+    if not rows:
+        raise HTTPException(status_code=404, detail="Нет участников для формирования справок.")
+
+    try:
+        template_path = resolve_template_path()
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix="spravki_"))
+    zip_path = tmp_dir / "spravki.zip"
+
+    try:
+        with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            used_names: set[str] = set()
+            for participation, student in rows:
+                payload = await build_spravka_payload(
+                    session,
+                    student_id=participation.student_id,
+                    event_id=event_id,
+                    date_from=date_from,
+                    date_to=date_to,
+                )
+                filename = make_filename(payload.get("fio_nominative") or _student_full_name(student.last_name, student.first_name, student.middle_name))
+                if filename in used_names:
+                    filename = f"{participation.participation_id}_{filename}"
+                used_names.add(filename)
+
+                docx_path = tmp_dir / filename
+                generate_spravka(payload, template_path, docx_path)
+                archive.write(docx_path, arcname=filename)
+    except Exception as exc:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        raise HTTPException(status_code=500, detail="Не удалось сформировать архив справок.") from exc
+
+    archive_name = f"Справки_{event.event_name[:80]}.zip".replace("/", "_").replace("\\", "_")
+    return FileResponse(
+        path=zip_path,
+        media_type="application/zip",
+        filename=archive_name,
+        background=BackgroundTask(lambda: shutil.rmtree(tmp_dir, ignore_errors=True)),
     )

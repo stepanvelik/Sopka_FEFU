@@ -100,13 +100,20 @@ export function EventsListPage() {
     loadEventsWithParticipants();
   }, []);
 
-  const filteredEvents = events.filter((event) => {
-    const matchesSearch = event.event_name?.toLowerCase().includes(search.toLowerCase());
-    const matchesLevel = !levelFilter || event.event_level === levelFilter;
-    const matchesType = !typeFilter || event.event_type_name === typeFilter;
-    const matchesPeriod = eventInDateRange(event, dateFrom, dateTo);
-    return matchesSearch && matchesLevel && matchesType && matchesPeriod;
-  });
+  const filteredEvents = events
+    .filter((event) => {
+      const matchesSearch = event.event_name?.toLowerCase().includes(search.toLowerCase());
+      const matchesLevel = !levelFilter || event.event_level === levelFilter;
+      const matchesType = !typeFilter || event.event_type_name === typeFilter;
+      const matchesPeriod = eventInDateRange(event, dateFrom, dateTo);
+      return matchesSearch && matchesLevel && matchesType && matchesPeriod;
+    })
+    .sort((left, right) => {
+      const leftDate = toIsoDate(left.start_date) || '9999-12-31';
+      const rightDate = toIsoDate(right.start_date) || '9999-12-31';
+      return leftDate.localeCompare(rightDate)
+        || String(left.event_name || '').localeCompare(String(right.event_name || ''), 'ru');
+    });
 
   const uniqueLevels = [...new Set(events.map((e) => e.event_level).filter(Boolean))];
 
@@ -195,23 +202,23 @@ export function EventsListPage() {
           filteredEvents.map((event) => (
             <div
               key={event.event_id}
-              className="event-card"
+              className="event-card app-card"
               onClick={() => setSelectedEvent(event)}
               style={{ cursor: 'pointer' }}
             >
               <div className="event-actions">
                  <button
                   type="button"
-                  className="action-btn details-btn"
+                  className="action-btn app-icon-button details-btn"
                   title="Статистика"
                   onClick={(e) => goToDetails(event.event_id, e)}
                 >
                   📶
                    </button>
-          <button type="button" className="action-btn edit-btn" title="Отредактировать" onClick={(e) => goToEdit(event.event_id, e)}>
+          <button type="button" className="action-btn app-icon-button edit-btn" title="Отредактировать" onClick={(e) => goToEdit(event.event_id, e)}>
                   ✎
                 </button>
-                <button type="button" className="action-btn delete-btn" title="Удалить мероприятие" onClick={(e) => deleteEvent(event.event_id, e)}>
+                <button type="button" className="action-btn app-icon-button delete-btn" title="Удалить мероприятие" onClick={(e) => deleteEvent(event.event_id, e)}>
                   ×
                 </button>
               </div>

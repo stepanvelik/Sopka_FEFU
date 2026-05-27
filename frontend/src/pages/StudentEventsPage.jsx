@@ -361,7 +361,9 @@ export function StudentEventsPage() {
             <div className="student-events-page__info-card student-events-page__info-card--student">
               <div className="student-events-page__info-label">{report.full_name}</div>
               <div className="student-events-page__info-phone">{formatPhone(report.phone)}</div>
-              <div className="student-events-page__info-title">Фамилия Имя Отчество | Номер телефона</div>
+              <a className="student-events-page__student-card-link" href={`#edit-participant?id=${report.student_id}`}>
+                Открыть карточку студента
+              </a>
             </div>
             <div className="student-events-page__info-card">
               <div className="student-events-page__info-label">{formatHours(report.total_hours)}</div>

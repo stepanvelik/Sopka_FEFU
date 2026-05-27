@@ -1,0 +1,115 @@
+.form-action-bar {
+  position: sticky;
+  bottom: 14px;
+  z-index: 12;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px 18px;
+  align-items: center;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12px 32px rgba(10, 56, 105, 0.16);
+  backdrop-filter: blur(8px);
+}
+
+.form-action-bar--error {
+  border-color: #e8c4c4;
+}
+
+.form-action-bar--success,
+.form-action-bar--ready {
+  border-color: #b8d7bd;
+}
+
+.form-action-bar__status {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.form-action-bar__title {
+  color: var(--app-color-text);
+  font-weight: 700;
+}
+
+.form-action-bar__message {
+  color: #52677a;
+  font-size: 0.9rem;
+}
+
+.form-action-bar__check,
+.form-action-bar__cancel,
+.form-action-bar__submit {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border-radius: var(--app-radius-sm);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.form-action-bar__check,
+.form-action-bar__cancel {
+  border: 1px solid var(--app-color-border);
+  background: #ffffff;
+  color: var(--app-color-text);
+}
+
+.form-action-bar__submit {
+  border: none;
+  background: var(--app-color-primary);
+  color: #ffffff;
+}
+
+.form-action-bar__submit:hover:not(:disabled),
+.form-action-bar__submit:focus-visible {
+  background: var(--app-color-primary-hover);
+  outline: none;
+}
+
+.form-action-bar__submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.form-action-bar__buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.form-action-bar__errors {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 10px 12px 10px 28px;
+  border-radius: var(--app-radius-sm);
+  background: var(--app-color-error-soft);
+  color: var(--app-color-error-text);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 760px) {
+  .form-action-bar {
+    grid-template-columns: 1fr;
+    bottom: 8px;
+  }
+
+  .form-action-bar__buttons {
+    justify-content: stretch;
+  }
+
+  .form-action-bar__cancel,
+  .form-action-bar__submit {
+    flex: 1;
+  }
+}

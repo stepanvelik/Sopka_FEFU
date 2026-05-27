@@ -12,6 +12,7 @@ import {
 } from '../lib/api.js';
 import { ParticipantCard } from '../components/EventParticipantFields.jsx';
 import { EventDayScheduleEditor } from '../components/EventDayScheduleEditor.jsx';
+import { FormActionBar } from '../components/ui/FormActionBar.jsx';
 import {
   apiTimeSlotsToParticipant,
   getParticipantValidationMessages,
@@ -153,6 +154,7 @@ export function EventEditPage() {
   const [eventData, setEventData] = useState(null);
   const [studentsCache, setStudentsCache] = useState([]);
   const [spravkaLoadingStudentId, setSpravkaLoadingStudentId] = useState(null);
+  const [actionErrors, setActionErrors] = useState([]);
 
   useEffect(() => {
     const hash = window.location.hash;
@@ -329,6 +331,7 @@ export function EventEditPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setActionErrors([]);
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -371,6 +374,7 @@ export function EventEditPage() {
   }
 
   function addParticipant() {
+    setActionErrors([]);
     setParticipants((prev) => [
       ...prev,
       { id: Date.now(), fio: '', role: 'Участник', phone: '', student_id: null, isPersisted: false, timeSlots: [] },
@@ -379,6 +383,7 @@ export function EventEditPage() {
   }
 
   function updateParticipant(index, updatedParticipant) {
+    setActionErrors([]);
     setParticipants((prev) => prev.map((p, i) => (i === index ? updatedParticipant : p)));
   }
 
@@ -408,6 +413,7 @@ export function EventEditPage() {
   }
 
   async function handleRemoveParticipant(index) {
+    setActionErrors([]);
     const participant = participants[index];
     if (!participant) return;
 
@@ -432,12 +438,14 @@ export function EventEditPage() {
       ...getParticipantValidationMessages(newParticipants),
     ];
     if (validationMessages.length > 0) {
-      setError(validationMessages.join(' '));
+      setActionErrors(validationMessages);
+      setError('');
       return;
     }
 
     setIsSubmitting(true);
     setError('');
+    setActionErrors([]);
 
     try {
       const eventTypeId = await resolveEventTypeId(formData.event_type?.trim());
@@ -508,13 +516,17 @@ export function EventEditPage() {
 
       window.location.hash = 'events-list';
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не удалось сохранить изменения');
+      setActionErrors([err instanceof Error ? err.message : 'Не удалось сохранить изменения']);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const validationMessages = getValidationMessages(formData);
+  const validationMessages = [
+    ...getValidationMessages(formData),
+    ...getParticipantValidationMessages(participants.filter((participant) => !participant.isPersisted)),
+  ];
+  const actionValidationMessages = actionErrors.length > 0 ? actionErrors : validationMessages;
   const isValid = validationMessages.length === 0;
 
   if (loading) {
@@ -629,15 +641,13 @@ export function EventEditPage() {
           )}
         </div>
 
-        <div className="form-actions">
-          <div className={`form-validation form-validation--${isValid ? 'ready' : 'error'}`}>
-            <span className="form-validation__title">{isValid ? 'Можно сохранить изменения' : 'Что нужно исправить'}</span>
-            <p className="form-validation__text">{isValid ? 'Все обязательные данные заполнены.' : validationMessages.join(' ')}</p>
-          </div>
-          <button className="form-submit" type="submit" disabled={!isValid || isSubmitting}>
-            {isSubmitting ? 'Сохранение...' : 'Сохранить изменения'}
-          </button>
-        </div>
+        <FormActionBar
+          canSubmit={isValid}
+          isSubmitting={isSubmitting}
+          submitLabel="Сохранить изменения"
+          cancelHref="#events-list"
+          validationMessages={actionValidationMessages}
+        />
       </form>
     </div>
   );

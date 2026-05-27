@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createEvent, createEventParticipant, listStudents, listEventTypes, createEventType } from '../lib/api.js';
 import { ParticipantCard } from '../components/EventParticipantFields.jsx';
 import { EventDayScheduleEditor } from '../components/EventDayScheduleEditor.jsx';
+import { FormActionBar } from '../components/ui/FormActionBar.jsx';
 import {
   getParticipantValidationMessages,
   participantTimeSlotsToApi,
@@ -360,6 +361,9 @@ export function EventCreatePage() {
 
   const isValid = canSubmit();
   const validationMessages = [...getValidationMessages(formData), ...getParticipantValidationMessages(participants)];
+  const actionValidationMessages = status.type === 'error' && status.messages?.length
+    ? status.messages
+    : validationMessages;
 
   return (
     <div className="event-create-page">
@@ -447,23 +451,15 @@ export function EventCreatePage() {
           )}
         </div>
 
-        <div className="form-actions">
-          <div className={`form-validation form-validation--${status.type === 'success' ? 'success' : isValid ? 'ready' : 'error'}`}>
-            <span className="form-validation__title">
-              {status.type === 'success' ? 'Мероприятие создано' : isValid ? 'Можно создать мероприятие' : 'Что нужно исправить'}
-            </span>
-            {status.type === 'error' && validationMessages.length > 0 ? (
-              <ul className="form-validation__list">{validationMessages.map((msg, i) => (<li key={i}>{msg}</li>))}</ul>
-            ) : status.type === 'success' ? (
-              <p className="form-validation__text">{status.message}</p>
-            ) : (
-              <p className="form-validation__text">Все обязательные данные заполнены.</p>
-            )}
-          </div>
-          <button className="form-submit" type="submit" disabled={!isValid || isSubmitting}>
-            {isSubmitting ? 'Создание...' : 'Создать мероприятие'}
-          </button>
-        </div>
+        <FormActionBar
+          canSubmit={isValid}
+          isSubmitting={isSubmitting}
+          submitLabel="Создать мероприятие"
+          submittingLabel="Создание..."
+          cancelHref="#events-list"
+          validationMessages={actionValidationMessages}
+          successMessage={status.type === 'success' ? status.message : ''}
+        />
       </form>
     </div>
   );

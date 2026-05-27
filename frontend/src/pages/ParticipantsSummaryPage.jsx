@@ -48,6 +48,14 @@ function getEventDateLabel(event) {
   return end && end !== start ? `${start} - ${end}` : start;
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 export function ParticipantsSummaryPage() {
   const [filters, setFilters] = useState({
     search: '',
@@ -137,9 +145,58 @@ export function ParticipantsSummaryPage() {
     setAppliedFilters(nextFilters);
   }
 
+  function exportToExcel() {
+    const headerCells = [
+      'ФИО',
+      'Номер телефона',
+      'Общее число рабочих часов',
+      ...report.events.map((event) => `${event.event_name} ${getEventDateLabel(event)}`),
+    ];
+    const rows = report.rows.map((row) => [
+      row.full_name,
+      formatPhone(row.phone),
+      formatHours(row.total_hours),
+      ...row.events.map((cell) => formatHours(cell.hours)),
+    ]);
+    const html = `
+      <html>
+        <head><meta charset="UTF-8" /></head>
+        <body>
+          <table>
+            <thead><tr>${headerCells.map((cell) => `<th>${escapeHtml(cell)}</th>`).join('')}</tr></thead>
+            <tbody>
+              ${rows.map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'Сводная_таблица_по_участникам.xls';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="summary-page">
-      <PageHeader title="Сводная таблица по участникам" />
+      <PageHeader
+        title="Сводная таблица по участникам"
+        actions={(
+          <button
+            type="button"
+            className="summary-page__export"
+            onClick={exportToExcel}
+            disabled={report.events.length === 0}
+          >
+            Экспорт в Excel
+          </button>
+        )}
+      />
 
       <FilterBar
         searchValue={filters.search}
@@ -184,7 +241,9 @@ export function ParticipantsSummaryPage() {
                 <th>Общее число рабочих часов</th>
                 {report.events.map((event) => (
                   <th key={event.event_id}>
-                    <span className="summary-page__event-name">{event.event_name}</span>
+                    <a className="summary-page__event-name" href={`#event-details?id=${event.event_id}`}>
+                      {event.event_name}
+                    </a>
                     <span className="summary-page__event-meta">
                       {event.event_type_name || event.event_level}
                     </span>
@@ -203,7 +262,11 @@ export function ParticipantsSummaryPage() {
               ) : (
                 report.rows.map((row) => (
                   <tr key={row.student_id}>
-                    <td>{row.full_name}</td>
+                    <td>
+                      <a className="summary-page__student-link" href={`#edit-participant?id=${row.student_id}`}>
+                        {row.full_name}
+                      </a>
+                    </td>
                     <td>{formatPhone(row.phone)}</td>
                     <td className="summary-page__hours-cell">{formatHours(row.total_hours)}</td>
                     {row.events.map((cell) => (
