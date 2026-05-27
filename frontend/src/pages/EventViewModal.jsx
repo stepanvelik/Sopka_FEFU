@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getEventType, listEventParticipants, listStudents } from '../lib/api.js';
 import { formatPhone } from '../lib/participantUtils.js';
+import { downloadSpravkaForStudent } from '../lib/spravkaUtils.js';
 import {
   formatRuDateShort,
   formatTimeDisplay,
@@ -32,6 +33,8 @@ export function EventViewModal({ event, onClose }) {
   const [eventTypeName, setEventTypeName] = useState('—');
   const [participants, setParticipants] = useState([]);
   const [studentsById, setStudentsById] = useState({});
+  const [spravkaLoadingStudentId, setSpravkaLoadingStudentId] = useState(null);
+  const [spravkaError, setSpravkaError] = useState('');
 
   // Загружаем название типа мероприятия
   useEffect(() => {
@@ -88,6 +91,25 @@ export function EventViewModal({ event, onClose }) {
     loadParticipants();
     return () => { isMounted = false; };
   }, [event]);
+
+  async function handleCreateSpravka(participant) {
+    if (!event?.event_id || !participant?.student_id) {
+      return;
+    }
+
+    setSpravkaLoadingStudentId(participant.student_id);
+    setSpravkaError('');
+    try {
+      await downloadSpravkaForStudent({
+        studentId: participant.student_id,
+        eventId: event.event_id,
+      });
+    } catch (err) {
+      setSpravkaError(err instanceof Error ? err.message : 'Не удалось сформировать справку.');
+    } finally {
+      setSpravkaLoadingStudentId(null);
+    }
+  }
 
   if (!event) return null;
 
@@ -194,6 +216,9 @@ export function EventViewModal({ event, onClose }) {
               </div>
               {isParticipantsExpanded && (
                 <div className="participants-table">
+                  {spravkaError ? (
+                    <p className="participants-table__spravka-error">{spravkaError}</p>
+                  ) : null}
                   <div className="participants-section__count">Всего: {participants.length}</div>
                   {participants.length === 0 ? (
                     <div className="participants-table__empty">Участники пока не привязаны.</div>
@@ -211,6 +236,20 @@ export function EventViewModal({ event, onClose }) {
                           {timeSlotsText || participant.notes ? (
                             <div className="participant-card__time">
                               <span className="participant-card__duration-text">{timeSlotsText || participant.notes}</span>
+                            </div>
+                          ) : null}
+                          {participant.student_id ? (
+                            <div className="participant-card__spravka-wrap">
+                              <button
+                                type="button"
+                                className="spravka-btn"
+                                disabled={String(spravkaLoadingStudentId) === String(participant.student_id)}
+                                onClick={() => handleCreateSpravka(participant)}
+                              >
+                                {String(spravkaLoadingStudentId) === String(participant.student_id)
+                                  ? 'Формирование...'
+                                  : 'Создать справку'}
+                              </button>
                             </div>
                           ) : null}
                         </div>

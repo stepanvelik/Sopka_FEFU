@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { getEvent, getStudent, listEventParticipants } from '../lib/api';
 import { enumerateEventDates, formatRuDateShort } from '../lib/eventScheduleUtils.js';
 import { formatPhone, getStudentFullName } from '../lib/participantUtils.js';
+import { downloadSpravkaForStudent } from '../lib/spravkaUtils.js';
+import '../components/EventParticipantFields.css';
 import './EventDetailsPage.css';
 
 function sumParticipationHours(participant, selectedDates, hasDateFilter) {
@@ -48,6 +50,8 @@ const EventDetailsPage = ({ eventId }) => {
   const [participations, setParticipations] = useState([]);
   const [studentsCache, setStudentsCache] = useState([]);
   const [selectedDates, setSelectedDates] = useState([]);
+  const [spravkaLoadingStudentId, setSpravkaLoadingStudentId] = useState(null);
+  const [spravkaError, setSpravkaError] = useState('');
   const [expandedSections, setExpandedSections] = useState({
     organizers: true,
     executors: true,
@@ -110,6 +114,25 @@ const EventDetailsPage = ({ eventId }) => {
       [section]: !prev[section],
     }));
   };
+
+  async function handleCreateSpravka(participant) {
+    if (!eventId || !participant?.student_id) {
+      return;
+    }
+
+    setSpravkaLoadingStudentId(participant.student_id);
+    setSpravkaError('');
+    try {
+      await downloadSpravkaForStudent({
+        studentId: participant.student_id,
+        eventId,
+      });
+    } catch (err) {
+      setSpravkaError(err instanceof Error ? err.message : 'Не удалось сформировать справку.');
+    } finally {
+      setSpravkaLoadingStudentId(null);
+    }
+  }
 
   const toggleDate = (date) => {
     setSelectedDates((prev) => (
@@ -203,6 +226,10 @@ const EventDetailsPage = ({ eventId }) => {
         <div className="participants-block">
           <h2 className="participants-block__title">Участники</h2>
 
+          {spravkaError ? (
+            <p className="participants-block__spravka-error">{spravkaError}</p>
+          ) : null}
+
           {eventDates.length > 0 && (
             <div className="participants-filter">
               <div className="participants-filter__title">Дни участия</div>
@@ -278,6 +305,16 @@ const EventDetailsPage = ({ eventId }) => {
                               <span>{sumParticipationHours(item, selectedDates, hasDateFilter) || 0} ч.</span>
                             </div>
                             <div className="participant-item__phone">{phone}</div>
+                            <button
+                              type="button"
+                              className="spravka-btn"
+                              disabled={String(spravkaLoadingStudentId) === String(item.student_id)}
+                              onClick={() => handleCreateSpravka(item)}
+                            >
+                              {String(spravkaLoadingStudentId) === String(item.student_id)
+                                ? 'Формирование...'
+                                : 'Создать справку'}
+                            </button>
                           </div>
                         );
                       })}

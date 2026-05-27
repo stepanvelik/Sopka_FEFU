@@ -102,6 +102,8 @@ export function ParticipantCard({
   onUpdateTimeSlot,
   onRemoveTimeSlot,
   onUpdateParticipant,
+  onCreateSpravka,
+  spravkaLoadingStudentId = null,
   readOnly = false,
   readOnlyIdentity = false,
   showTimeSlots = true,
@@ -117,6 +119,9 @@ export function ParticipantCard({
     return sum;
   }, 0);
   const durationHours = (totalDuration / 60).toFixed(1).replace(/\.0$/, '');
+  const canCreateSpravka = Boolean(onCreateSpravka && participant.student_id);
+  const isSpravkaLoading = canCreateSpravka
+    && String(spravkaLoadingStudentId) === String(participant.student_id);
 
   return (
     <div className="participant-wrapper">
@@ -190,6 +195,18 @@ export function ParticipantCard({
             </div>
           </div>
         )}
+        {canCreateSpravka ? (
+          <div className="participant-card__spravka-wrap">
+            <button
+              type="button"
+              className="spravka-btn"
+              disabled={isSpravkaLoading}
+              onClick={() => onCreateSpravka(participant)}
+            >
+              {isSpravkaLoading ? 'Формирование...' : 'Создать справку'}
+            </button>
+          </div>
+        ) : null}
       </div>
       {!readOnly ? (
         <button type="button" className="participant-card__remove-outside" onClick={() => onRemove(index)}>−</button>

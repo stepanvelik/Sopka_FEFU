@@ -35,6 +35,39 @@
   transform: scale(1.1);
 }
 
+.spravka-btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #2563eb;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.spravka-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.spravka-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+.participant-card__spravka-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 10px 16px 12px;
+  background: #ffffff;
+  border-top: 1px solid #e0e8f0;
+  border-radius: 0 0 8px 8px;
+}
+
 .participant-card__main {
   display: grid;
   grid-template-columns: 1fr 140px 1fr;

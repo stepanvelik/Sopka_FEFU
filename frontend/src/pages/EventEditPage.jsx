@@ -27,6 +27,7 @@ import {
   scheduleRowsToApi,
   sumScheduleHours,
 } from '../lib/eventScheduleUtils.js';
+import { downloadSpravkaForStudent } from '../lib/spravkaUtils.js';
 import './EventCreatePage.css';
 
 const eventLevelOptions = [
@@ -151,6 +152,7 @@ export function EventEditPage() {
   const [eventTypesCache, setEventTypesCache] = useState([]);
   const [eventData, setEventData] = useState(null);
   const [studentsCache, setStudentsCache] = useState([]);
+  const [spravkaLoadingStudentId, setSpravkaLoadingStudentId] = useState(null);
 
   useEffect(() => {
     const hash = window.location.hash;
@@ -346,6 +348,25 @@ export function EventEditPage() {
     } catch (err) {
       console.error('Не удалось создать тип:', err);
       return null;
+    }
+  }
+
+  async function handleCreateSpravka(participant) {
+    if (!eventId || !participant?.student_id) {
+      return;
+    }
+
+    setSpravkaLoadingStudentId(participant.student_id);
+    setError('');
+    try {
+      await downloadSpravkaForStudent({
+        studentId: participant.student_id,
+        eventId,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Не удалось сформировать справку.');
+    } finally {
+      setSpravkaLoadingStudentId(null);
     }
   }
 
@@ -579,6 +600,8 @@ export function EventEditPage() {
                       studentsList={studentsCache}
                       readOnlyIdentity={participant.isPersisted}
                       showTimeSlots
+                      onCreateSpravka={participant.isPersisted && participant.student_id ? handleCreateSpravka : undefined}
+                      spravkaLoadingStudentId={spravkaLoadingStudentId}
                       onRemove={handleRemoveParticipant}
                       onAddTimeSlot={addTimeSlot}
                       onRemoveTimeSlot={removeTimeSlot}

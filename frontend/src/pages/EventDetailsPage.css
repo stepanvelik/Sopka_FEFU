@@ -240,6 +240,16 @@
   text-align: right;
 }
 
+.participants-block__spravka-error,
+.participants-table__spravka-error {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
+
 .participant-group__empty {
   padding: 24px;
   text-align: center;
