@@ -111,7 +111,7 @@ async def add_participant(
         if hasattr(exc, "orig") and "uq_event_participation" in str(exc.orig).lower():
             raise HTTPException(
                 status_code=409,
-                detail="Участник с такой ролью уже добавлен.",
+                detail="Этот студент уже добавлен в мероприятие.",
             ) from exc
         raise HTTPException(status_code=500, detail="Ошибка при добавлении участника.")
 

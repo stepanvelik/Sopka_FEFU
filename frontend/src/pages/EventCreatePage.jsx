@@ -238,7 +238,15 @@ export function EventCreatePage() {
   }
 
   function addTimeSlot(index) {
-    setParticipants((prev) => prev.map((p, i) => (i === index ? { ...p, timeSlots: [...p.timeSlots, { date: '', start: '', end: '' }] } : p)));
+    setParticipants((prev) => prev.map((p, i) => {
+      if (i !== index) return p;
+      const usedDates = new Set((p.timeSlots || []).map((s) => s.date));
+      const nextRow = scheduleRows.find((row) => row.date && !usedDates.has(row.date)) || scheduleRows[0];
+      const newSlot = nextRow
+        ? { date: nextRow.date, start: nextRow.start || '', end: nextRow.end || '' }
+        : { date: '', start: '', end: '' };
+      return { ...p, timeSlots: [...p.timeSlots, newSlot] };
+    }));
   }
 
   function removeTimeSlot(index, slotIdx) {
