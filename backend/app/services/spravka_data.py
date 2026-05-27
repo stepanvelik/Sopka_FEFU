@@ -110,12 +110,77 @@ def _format_time(value: time | str | None) -> str:
     return text
 
 
+def _format_day_with_time(day: date, start_time: time | None, end_time: time | None) -> str:
+    month_name = MONTH_GENITIVE[day.month] if 1 <= day.month <= 12 else ""
+    day_part = f"{day.day} {month_name} {day.year} г."
+    start_label = _format_time(start_time)
+    end_label = _format_time(end_time)
+    if start_label and end_label:
+        return f"{day_part}, с {start_label} до {end_label}"
+    return day_part
+
+
+def _format_slots_line(slots: list[EventParticipationTimeSlot]) -> str:
+    """Каждый слот участия — отдельная дата со своим временем."""
+    if not slots:
+        return "—"
+
+    sorted_slots = sorted(
+        slots,
+        key=lambda slot: (slot.participation_date, slot.start_time or time.min),
+    )
+    parts = [
+        _format_day_with_time(slot.participation_date, slot.start_time, slot.end_time)
+        for slot in sorted_slots
+    ]
+    return "; ".join(parts)
+
+
+def _format_event_schedule_line(event: Event) -> str | None:
+    """Расписание мероприятия по дням (если у студента нет своих слотов)."""
+    schedule = event.event_daily_schedule or []
+    rows: list[tuple[date, time | None, time | None]] = []
+
+    for row in schedule:
+        if not isinstance(row, dict):
+            continue
+        raw_date = row.get("date")
+        if not raw_date:
+            continue
+        if isinstance(raw_date, date):
+            day = raw_date
+        else:
+            day = date.fromisoformat(str(raw_date)[:10])
+
+        start_time = None
+        end_time = None
+        start_raw = row.get("start_time")
+        end_raw = row.get("end_time")
+        if start_raw:
+            start_time = time.fromisoformat(str(start_raw)[:8])
+        if end_raw:
+            end_time = time.fromisoformat(str(end_raw)[:8])
+
+        rows.append((day, start_time, end_time))
+
+    if not rows:
+        return None
+
+    rows.sort(key=lambda item: item[0])
+    return "; ".join(_format_day_with_time(day, start, end) for day, start, end in rows)
+
+
 def _format_dates_line(dates: list[date], start_time: time | None, end_time: time | None) -> str:
+    """Один интервал времени на все даты (fallback, если нет посуточного расписания)."""
     if not dates:
         return "—"
 
+    unique_dates = sorted(set(dates))
+    if len(unique_dates) == 1:
+        return _format_day_with_time(unique_dates[0], start_time, end_time)
+
     by_month: dict[tuple[int, int], list[int]] = {}
-    for item in sorted(dates):
+    for item in unique_dates:
         key = (item.year, item.month)
         by_month.setdefault(key, []).append(item.day)
 
@@ -232,19 +297,20 @@ async def build_spravka_payload(
 
     slots = _filter_slots(list(participation.time_slots), date_from=date_from, date_to=date_to)
     if slots:
-        dates = [slot.participation_date for slot in slots]
-        starts = [slot.start_time for slot in slots]
-        ends = [slot.end_time for slot in slots]
-        dates_line = _format_dates_line(dates, min(starts), max(ends))
+        dates_line = _format_slots_line(slots)
     else:
-        event_dates, start_time, end_time = _dates_from_event(event)
-        if date_from or date_to:
-            event_dates = [
-                day
-                for day in event_dates
-                if (not date_from or day >= date_from) and (not date_to or day <= date_to)
-            ]
-        dates_line = _format_dates_line(event_dates, start_time, end_time)
+        schedule_line = _format_event_schedule_line(event)
+        if schedule_line:
+            dates_line = schedule_line
+        else:
+            event_dates, start_time, end_time = _dates_from_event(event)
+            if date_from or date_to:
+                event_dates = [
+                    day
+                    for day in event_dates
+                    if (not date_from or day >= date_from) and (not date_to or day <= date_to)
+                ]
+            dates_line = _format_dates_line(event_dates, start_time, end_time)
 
     fio_nominative = _student_full_name(student)
 

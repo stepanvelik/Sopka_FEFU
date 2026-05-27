@@ -215,6 +215,15 @@ textarea.events-form__control {
   font-size: 0.9rem;
 }
 
+.participants-table__spravka-error {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
+
 /* Контейнер для плюса по центру (в развернутом виде) */
 .participants-section__plus-container {
   display: flex;
