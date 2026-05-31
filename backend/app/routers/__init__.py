@@ -6,6 +6,7 @@ from app.routers.event_participation import (
     router as event_participation_router,
     root as participants_router,
 )
+from app.routers.reports import router as reports_router
 
 __all__ = [
     "bank_details_router",
@@ -14,4 +15,5 @@ __all__ = [
     "students_router",
     "event_participation_router",
     "participants_router",
+    "reports_router",
 ]

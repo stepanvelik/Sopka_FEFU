@@ -1,9 +1,12 @@
+import { useId } from 'react';
 import './ActionPanel.css';
 
 export function ActionPanel({ title, actions }) {
+  const titleId = useId();
+
   return (
-    <section className="action-panel" aria-labelledby="main-actions-title">
-      <h1 className="action-panel__title" id="main-actions-title">
+    <section className="action-panel" aria-labelledby={titleId}>
+      <h1 className="action-panel__title" id={titleId}>
         {title}
       </h1>
       <ul className="action-panel__list">

@@ -79,18 +79,30 @@ export function getParticipantValidationMessages(participants) {
   return messages;
 }
 
-export function buildParticipantNotes(participant) {
-  const slots = participant.timeSlots
-    .filter((slot) => slot.date || slot.start || slot.end)
-    .map((slot) => [
-      slot.date,
-      slot.start && slot.end ? `${slot.start}-${slot.end}` : `${slot.start || ''}${slot.end ? `-${slot.end}` : ''}`,
-    ]
-      .filter(Boolean)
-      .join(' '))
-    .filter(Boolean);
+export function participantTimeSlotsToApi(participant) {
+  return (participant.timeSlots || [])
+    .filter((slot) => slot.date && slot.start && slot.end)
+    .map((slot) => {
+      const [startHour, startMinute] = slot.start.split(':').map(Number);
+      const [endHour, endMinute] = slot.end.split(':').map(Number);
+      const diffMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
+      const participationHours = diffMinutes > 0 ? Math.round((diffMinutes / 60) * 100) / 100 : null;
 
-  return slots.length > 0 ? `Интервалы участия: ${slots.join('; ')}` : null;
+      return {
+        participation_date: slot.date,
+        start_time: slot.start.length === 5 ? `${slot.start}:00` : slot.start,
+        end_time: slot.end.length === 5 ? `${slot.end}:00` : slot.end,
+        participation_hours: participationHours,
+      };
+    });
+}
+
+export function apiTimeSlotsToParticipant(timeSlots) {
+  return (timeSlots || []).map((slot) => ({
+    date: String(slot.participation_date || '').slice(0, 10),
+    start: String(slot.start_time || '').slice(0, 5),
+    end: String(slot.end_time || '').slice(0, 5),
+  }));
 }
 
 export async function resolveParticipantStudentId(participant, studentsCache) {

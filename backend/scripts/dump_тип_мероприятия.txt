@@ -1,0 +1,1 @@
+rsidR="00451A2A" w:rsidRPr="00451A2A"><w:rPr><w:color w:val="000000"/><w:sz w:val="28"/><w:szCs w:val="28"/><w:highlight w:val="yellow"/></w:rPr><w:t>тип мероприятия</w:t></w:r><w:r w:rsidR="00A500C1" w:rsidRPr="00D53B9F"><w:rPr><w:color w:val="000000"/><w:sz w:val="28"/><w:szCs w:val="28"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:proofErr w:type="spellS

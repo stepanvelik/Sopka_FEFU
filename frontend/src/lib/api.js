@@ -215,6 +215,157 @@ export async function getEventType(eventTypeId) {
   return request(`/event-types/${eventTypeId}`);
 }
 
+export async function getParticipantsSummaryReport({
+  search = '',
+  dateFrom = '',
+  dateTo = '',
+  eventLevel = '',
+  eventTypeId = '',
+} = {}) {
+  const params = new URLSearchParams();
+
+  if (search) {
+    params.set('search', search);
+  }
+  if (dateFrom) {
+    params.set('date_from', dateFrom);
+  }
+  if (dateTo) {
+    params.set('date_to', dateTo);
+  }
+  if (eventLevel) {
+    params.set('event_level', eventLevel);
+  }
+  if (eventTypeId) {
+    params.set('event_type_id', String(eventTypeId));
+  }
+
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return request(`/reports/participants-summary${suffix}`);
+}
+
+export async function getStudentEventsReport({
+  search = '',
+  studentId = '',
+  dateFrom = '',
+  dateTo = '',
+  eventLevel = '',
+  eventTypeId = '',
+} = {}) {
+  const params = new URLSearchParams();
+
+  if (search) {
+    params.set('search', search);
+  }
+  if (studentId) {
+    params.set('student_id', String(studentId));
+  }
+  if (dateFrom) {
+    params.set('date_from', dateFrom);
+  }
+  if (dateTo) {
+    params.set('date_to', dateTo);
+  }
+  if (eventLevel) {
+    params.set('event_level', eventLevel);
+  }
+  if (eventTypeId) {
+    params.set('event_type_id', String(eventTypeId));
+  }
+
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return request(`/reports/student-events${suffix}`);
+}
+
+export async function downloadStudentSpravka({
+  studentId,
+  eventId,
+  dateFrom = '',
+  dateTo = '',
+} = {}) {
+  const params = new URLSearchParams({
+    student_id: String(studentId),
+    event_id: String(eventId),
+  });
+
+  if (dateFrom) {
+    params.set('date_from', dateFrom);
+  }
+  if (dateTo) {
+    params.set('date_to', dateTo);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/reports/student-events/spravka?${params.toString()}`);
+  if (!response.ok) {
+    let message = 'Не удалось сформировать справку.';
+    try {
+      const payload = await response.json();
+      if (typeof payload?.detail === 'string') {
+        message = payload.detail;
+      }
+    } catch {
+      // Keep fallback message for non-JSON errors.
+    }
+    throw new Error(message);
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get('Content-Disposition') || '';
+  const utfMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+  const plainMatch = disposition.match(/filename="?([^";]+)"?/i);
+  const rawName = utfMatch?.[1] || plainMatch?.[1] || 'Справка.docx';
+  const filename = decodeURIComponent(rawName);
+
+  return { blob, filename };
+}
+
+export async function downloadEventSpravkiArchive({
+  eventId,
+  roleName = '',
+  dateFrom = '',
+  dateTo = '',
+  studentIds = [],
+} = {}) {
+  const params = new URLSearchParams();
+
+  if (roleName) {
+    params.set('role_name', roleName);
+  }
+  if (dateFrom) {
+    params.set('date_from', dateFrom);
+  }
+  if (dateTo) {
+    params.set('date_to', dateTo);
+  }
+  studentIds.forEach((studentId) => {
+    params.append('student_ids', String(studentId));
+  });
+
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  const response = await fetch(`${API_BASE_URL}/reports/events/${eventId}/spravki.zip${suffix}`);
+  if (!response.ok) {
+    let message = 'Не удалось сформировать архив справок.';
+    try {
+      const payload = await response.json();
+      if (typeof payload?.detail === 'string') {
+        message = payload.detail;
+      }
+    } catch {
+      // Keep fallback message for non-JSON errors.
+    }
+    throw new Error(message);
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get('Content-Disposition') || '';
+  const utfMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+  const plainMatch = disposition.match(/filename="?([^";]+)"?/i);
+  const rawName = utfMatch?.[1] || plainMatch?.[1] || 'Справки.zip';
+  const filename = decodeURIComponent(rawName);
+
+  return { blob, filename };
+}
+
 export { API_BASE_URL };
 
 

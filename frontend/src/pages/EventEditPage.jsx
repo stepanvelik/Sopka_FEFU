@@ -8,14 +8,17 @@ import {
   listEventTypes,
   listStudents,
   updateEvent,
+  updateEventParticipant,
 } from '../lib/api.js';
 import { ParticipantCard } from '../components/EventParticipantFields.jsx';
 import { EventDayScheduleEditor } from '../components/EventDayScheduleEditor.jsx';
+import { FormActionBar } from '../components/ui/FormActionBar.jsx';
 import {
-  buildParticipantNotes,
+  apiTimeSlotsToParticipant,
   getParticipantValidationMessages,
   getStudentFullName,
   normalizePhoneDigits,
+  participantTimeSlotsToApi,
   resolveParticipantStudentId,
 } from '../lib/participantUtils.js';
 import {
@@ -25,6 +28,7 @@ import {
   scheduleRowsToApi,
   sumScheduleHours,
 } from '../lib/eventScheduleUtils.js';
+import { downloadSpravkaForStudent } from '../lib/spravkaUtils.js';
 import './EventCreatePage.css';
 
 const eventLevelOptions = [
@@ -149,6 +153,8 @@ export function EventEditPage() {
   const [eventTypesCache, setEventTypesCache] = useState([]);
   const [eventData, setEventData] = useState(null);
   const [studentsCache, setStudentsCache] = useState([]);
+  const [spravkaLoadingStudentId, setSpravkaLoadingStudentId] = useState(null);
+  const [actionErrors, setActionErrors] = useState([]);
 
   useEffect(() => {
     const hash = window.location.hash;
@@ -267,7 +273,7 @@ export function EventEditPage() {
               phone: student?.phone ? normalizePhoneDigits(student.phone) : '',
               student_id: participant.student_id,
               isPersisted: true,
-              timeSlots: [],
+              timeSlots: apiTimeSlotsToParticipant(participant.time_slots),
             };
           }),
         );
@@ -325,6 +331,7 @@ export function EventEditPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setActionErrors([]);
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -347,7 +354,27 @@ export function EventEditPage() {
     }
   }
 
+  async function handleCreateSpravka(participant) {
+    if (!eventId || !participant?.student_id) {
+      return;
+    }
+
+    setSpravkaLoadingStudentId(participant.student_id);
+    setError('');
+    try {
+      await downloadSpravkaForStudent({
+        studentId: participant.student_id,
+        eventId,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Не удалось сформировать справку.');
+    } finally {
+      setSpravkaLoadingStudentId(null);
+    }
+  }
+
   function addParticipant() {
+    setActionErrors([]);
     setParticipants((prev) => [
       ...prev,
       { id: Date.now(), fio: '', role: 'Участник', phone: '', student_id: null, isPersisted: false, timeSlots: [] },
@@ -356,11 +383,20 @@ export function EventEditPage() {
   }
 
   function updateParticipant(index, updatedParticipant) {
+    setActionErrors([]);
     setParticipants((prev) => prev.map((p, i) => (i === index ? updatedParticipant : p)));
   }
 
   function addTimeSlot(index) {
-    setParticipants((prev) => prev.map((p, i) => (i === index ? { ...p, timeSlots: [...p.timeSlots, { date: '', start: '', end: '' }] } : p)));
+    setParticipants((prev) => prev.map((p, i) => {
+      if (i !== index) return p;
+      const usedDates = new Set((p.timeSlots || []).map((s) => s.date));
+      const nextRow = scheduleRows.find((row) => row.date && !usedDates.has(row.date)) || scheduleRows[0];
+      const newSlot = nextRow
+        ? { date: nextRow.date, start: nextRow.start || '', end: nextRow.end || '' }
+        : { date: '', start: '', end: '' };
+      return { ...p, timeSlots: [...p.timeSlots, newSlot] };
+    }));
   }
 
   function removeTimeSlot(index, slotIdx) {
@@ -377,6 +413,7 @@ export function EventEditPage() {
   }
 
   async function handleRemoveParticipant(index) {
+    setActionErrors([]);
     const participant = participants[index];
     if (!participant) return;
 
@@ -401,12 +438,14 @@ export function EventEditPage() {
       ...getParticipantValidationMessages(newParticipants),
     ];
     if (validationMessages.length > 0) {
-      setError(validationMessages.join(' '));
+      setActionErrors(validationMessages);
+      setError('');
       return;
     }
 
     setIsSubmitting(true);
     setError('');
+    setActionErrors([]);
 
     try {
       const eventTypeId = await resolveEventTypeId(formData.event_type?.trim());
@@ -434,6 +473,14 @@ export function EventEditPage() {
 
       await updateEvent(eventId, payload);
 
+      const persistedParticipants = participants.filter((participant) => participant.isPersisted && participant.participation_id);
+      for (const participant of persistedParticipants) {
+        await updateEventParticipant(eventId, participant.participation_id, {
+          role_name: participant.role || 'Участник',
+          time_slots: participantTimeSlotsToApi(participant),
+        });
+      }
+
       let updatedStudentsCache = [...studentsCache];
       for (const participant of newParticipants) {
         const studentId = await resolveParticipantStudentId(participant, updatedStudentsCache);
@@ -441,7 +488,8 @@ export function EventEditPage() {
           student_id: studentId,
           role_name: participant.role || 'Участник',
           participation_status: 'planned',
-          notes: buildParticipantNotes(participant),
+          notes: null,
+          time_slots: participantTimeSlotsToApi(participant),
         });
 
         const student = updatedStudentsCache.find((item) => item.student_id === studentId);
@@ -468,13 +516,17 @@ export function EventEditPage() {
 
       window.location.hash = 'events-list';
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не удалось сохранить изменения');
+      setActionErrors([err instanceof Error ? err.message : 'Не удалось сохранить изменения']);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const validationMessages = getValidationMessages(formData);
+  const validationMessages = [
+    ...getValidationMessages(formData),
+    ...getParticipantValidationMessages(participants.filter((participant) => !participant.isPersisted)),
+  ];
+  const actionValidationMessages = actionErrors.length > 0 ? actionErrors : validationMessages;
   const isValid = validationMessages.length === 0;
 
   if (loading) {
@@ -566,8 +618,10 @@ export function EventEditPage() {
                       participant={participant}
                       index={idx}
                       studentsList={studentsCache}
-                      readOnly={participant.isPersisted}
-                      showTimeSlots={!participant.isPersisted}
+                      readOnlyIdentity={participant.isPersisted}
+                      showTimeSlots
+                      onCreateSpravka={participant.isPersisted && participant.student_id ? handleCreateSpravka : undefined}
+                      spravkaLoadingStudentId={spravkaLoadingStudentId}
                       onRemove={handleRemoveParticipant}
                       onAddTimeSlot={addTimeSlot}
                       onRemoveTimeSlot={removeTimeSlot}
@@ -587,15 +641,13 @@ export function EventEditPage() {
           )}
         </div>
 
-        <div className="form-actions">
-          <div className={`form-validation form-validation--${isValid ? 'ready' : 'error'}`}>
-            <span className="form-validation__title">{isValid ? 'Можно сохранить изменения' : 'Что нужно исправить'}</span>
-            <p className="form-validation__text">{isValid ? 'Все обязательные данные заполнены.' : validationMessages.join(' ')}</p>
-          </div>
-          <button className="form-submit" type="submit" disabled={!isValid || isSubmitting}>
-            {isSubmitting ? 'Сохранение...' : 'Сохранить изменения'}
-          </button>
-        </div>
+        <FormActionBar
+          canSubmit={isValid}
+          isSubmitting={isSubmitting}
+          submitLabel="Сохранить изменения"
+          cancelHref="#events-list"
+          validationMessages={actionValidationMessages}
+        />
       </form>
     </div>
   );

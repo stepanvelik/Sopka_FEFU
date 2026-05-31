@@ -1,0 +1,168 @@
+.summary-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px;
+}
+
+.summary-page__counts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 44px;
+  color: #777777;
+  font-size: 0.96rem;
+}
+
+.summary-page__export {
+  min-height: 38px;
+  padding: 0 14px;
+  border: none;
+  border-radius: var(--app-radius-sm);
+  background: var(--app-color-primary);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.summary-page__export:hover:not(:disabled),
+.summary-page__export:focus-visible {
+  background: var(--app-color-primary-hover);
+  outline: none;
+}
+
+.summary-page__export:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.summary-page__status,
+.summary-page__empty {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 8px;
+  color: #33485c;
+  background: #eef4fb;
+}
+
+.summary-page__status--error {
+  color: #8c2f28;
+  background: #fde9e7;
+}
+
+.summary-page__table-frame {
+  width: 100%;
+  max-height: 62vh;
+  overflow: auto;
+  padding: 0 10px 20px;
+  background: #ffffff;
+}
+
+.summary-page__table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: #111111;
+  background: #ffffff;
+  table-layout: fixed;
+}
+
+.summary-page__table th,
+.summary-page__table td {
+  min-width: 150px;
+  padding: 10px 12px;
+  border-right: 1px solid #6f6f6f;
+  border-bottom: 1px solid #6f6f6f;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.summary-page__table th:first-child,
+.summary-page__table td:first-child {
+  border-left: 1px solid #6f6f6f;
+}
+
+.summary-page__table thead th {
+  border-top: 1px solid #6f6f6f;
+}
+
+.summary-page__table th:first-child,
+.summary-page__table td:first-child {
+  min-width: 210px;
+  text-align: left;
+}
+
+.summary-page__table th:nth-child(2),
+.summary-page__table td:nth-child(2) {
+  min-width: 170px;
+}
+
+.summary-page__table th:nth-child(3),
+.summary-page__table td:nth-child(3) {
+  min-width: 150px;
+}
+
+.summary-page__table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #ffffff;
+  font-weight: 500;
+  box-shadow: 0 1px 0 #6f6f6f;
+}
+
+.summary-page__event-name,
+.summary-page__event-meta,
+.summary-page__event-date {
+  display: block;
+}
+
+.summary-page__event-name {
+  color: var(--app-color-primary);
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+.summary-page__student-link {
+  color: var(--app-color-primary);
+  font-weight: 600;
+}
+
+.summary-page__event-meta {
+  margin-top: 4px;
+  color: #52677a;
+  font-size: 0.82rem;
+}
+
+.summary-page__event-date {
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.summary-page__hours-cell {
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-page__hours-cell--filled {
+  background: #dcf8e3;
+}
+
+.summary-page__table-empty {
+  color: #6c7f91;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .summary-page {
+    padding: 16px;
+  }
+
+  .summary-page__counts {
+    gap: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

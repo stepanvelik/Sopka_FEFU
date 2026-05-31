@@ -15,6 +15,80 @@
   padding-inline: clamp(18px, 4vw, 78px);
 }
 
+.app-panel {
+  background: var(--app-color-soft);
+  border: 1px solid color-mix(in srgb, var(--app-color-border) 72%, #ffffff);
+  border-radius: var(--app-radius-md);
+  padding: 24px;
+}
+
+.app-card {
+  background: var(--app-color-page);
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
+}
+
+.app-muted {
+  color: var(--app-color-muted);
+}
+
+.app-status {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: var(--app-radius-sm);
+  color: #33485c;
+  background: var(--app-color-soft);
+}
+
+.app-status--error {
+  color: var(--app-color-error-text);
+  background: var(--app-color-error-soft);
+}
+
+.app-icon-button {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-color-page);
+  color: var(--app-color-text);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.app-icon-button:hover,
+.app-icon-button:focus-visible {
+  background: var(--app-color-soft);
+  border-color: var(--app-color-accent);
+  color: var(--app-color-primary);
+  outline: none;
+}
+
+.app-icon-button--close {
+  position: relative;
+}
+
+.app-icon-button--close::before,
+.app-icon-button--close::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.app-icon-button--close::before {
+  transform: rotate(45deg);
+}
+
+.app-icon-button--close::after {
+  transform: rotate(-45deg);
+}
+
 @media (max-width: 768px) {
   .app-shell {
     padding: 8px;

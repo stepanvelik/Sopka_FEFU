@@ -1,0 +1,453 @@
+.student-events-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 20px;
+}
+
+/* Фильтры */
+.student-events-page__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 20px;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.student-events-page__filters-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.student-events-page__filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.student-events-page__filter-group--search {
+  flex: 1;
+  min-width: 250px;
+}
+
+.student-events-page__filter-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #33485c;
+}
+
+.student-events-page__filter-input {
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: #ffffff;
+  transition: all 0.2s;
+}
+
+.student-events-page__filter-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.student-events-page__filter-input--search {
+  width: 100%;
+  min-width: 280px;
+}
+
+.student-events-page__search-btn,
+.student-events-page__reset-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.student-events-page__search-btn {
+  background: #3b82f6;
+  color: white;
+}
+
+.student-events-page__search-btn:hover {
+  background: #2563eb;
+}
+
+.student-events-page__reset-btn {
+  background: #e2e8f0;
+  color: #33485c;
+}
+
+.student-events-page__reset-btn:hover {
+  background: #cbd5e1;
+}
+
+.student-events-page__spravka-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 16px 20px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+}
+
+.student-events-page__student-card-link {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 4px;
+  padding: 0 12px;
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-sm);
+  background: #ffffff;
+  color: var(--app-color-primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.student-events-page__student-card-link:hover,
+.student-events-page__student-card-link:focus-visible {
+  background: var(--app-color-soft);
+  outline: none;
+}
+
+.student-events-page__spravka-select-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 260px;
+}
+
+.student-events-page__spravka-select-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #33485c;
+}
+
+.student-events-page__spravka-select {
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: #ffffff;
+}
+
+.student-events-page__spravka-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #2563eb;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.student-events-page__spravka-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.student-events-page__spravka-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* Информационные карточки */
+.student-events-page__info-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.student-events-page__info-card {
+  flex: 1;
+  min-width: 200px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  border-radius: var(--app-radius-md);
+  border: 1px solid var(--app-color-border);
+  text-align: center;
+}
+
+.student-events-page__info-card--student {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.student-events-page__info-label {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+  margin-bottom: 0;
+  word-break: break-word;
+}
+
+.student-events-page__info-card--student .student-events-page__info-phone {
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: #64748b;
+  line-height: 1.3;
+}
+
+.student-events-page__info-title {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Список похожих участников */
+.student-events-page__matches {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.student-events-page__matches-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.student-events-page__matches-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.student-events-page__match-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-color-page);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.student-events-page__match-btn:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.student-events-page__match-btn--selected {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.student-events-page__match-name {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.student-events-page__match-phone {
+  color: #64748b;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* Статус и пустое состояние */
+.student-events-page__status,
+.student-events-page__empty {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: var(--app-radius-sm);
+  color: #33485c;
+  background: var(--app-color-soft);
+}
+
+.student-events-page__status--error {
+  color: var(--app-color-error-text);
+  background: var(--app-color-error-soft);
+}
+
+/* Таблица */
+.student-events-page__table-frame {
+  width: 100%;
+  max-height: 55vh;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.student-events-page__table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #111111;
+  background: #ffffff;
+  font-size: 0.9rem;
+}
+
+.student-events-page__table th,
+.student-events-page__table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.4;
+}
+
+.student-events-page__table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #1e293b;
+  border-bottom: 2px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.student-events-page__table td {
+  color: #33485c;
+}
+
+.student-events-page__table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.student-events-page__event-name-cell {
+  font-weight: 500;
+  color: #1e293b;
+  min-width: 200px;
+}
+
+.student-events-page__event-link {
+  display: inline;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: #2563eb;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.student-events-page__event-link:hover:not(:disabled) {
+  color: #1d4ed8;
+}
+
+.student-events-page__event-link:disabled {
+  color: #64748b;
+  cursor: wait;
+  text-decoration: none;
+}
+
+.student-events-page__hours-cell {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: #059669;
+}
+
+/* Ссылка назад */
+.student-events-page__back-link {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.student-events-page__back-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.student-events-page__back-link-btn:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .student-events-page__info-label {
+    font-size: 1.2rem;
+    word-break: break-word;
+  }
+
+  .student-events-page__info-card--student .student-events-page__info-phone {
+    font-size: 0.95rem;
+  }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .student-events-page {
+    padding: 16px;
+    gap: 18px;
+  }
+
+  .student-events-page__filters {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+  }
+
+  .student-events-page__filters-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .student-events-page__filter-group--search {
+    width: 100%;
+  }
+
+  .student-events-page__filter-input--search {
+    min-width: auto;
+  }
+
+  .student-events-page__search-btn,
+  .student-events-page__reset-btn {
+    width: 100%;
+  }
+
+  .student-events-page__info-card {
+    min-width: calc(50% - 10px);
+  }
+
+  .student-events-page__table th,
+  .student-events-page__table td {
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .student-events-page__info-card {
+    min-width: 100%;
+  }
+
+  .student-events-page__info-label {
+    font-size: 1.5rem;
+  }
+}

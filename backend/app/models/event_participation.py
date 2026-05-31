@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from sqlalchemy import BigInteger, DateTime, ForeignKey, String, Text, UniqueConstraint, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
 
@@ -27,6 +27,13 @@ class EventParticipation(Base):
         DateTime(timezone=False), server_default=func.now(), onupdate=func.now()
     )
 
+    time_slots: Mapped[list["EventParticipationTimeSlot"]] = relationship(
+        "EventParticipationTimeSlot",
+        back_populates="participation",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
     __table_args__ = (
-        UniqueConstraint("student_id", "event_id", "role_name", name="uq_event_participation"),
+        UniqueConstraint("student_id", "event_id", name="uq_event_participation"),
     )

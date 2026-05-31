@@ -7,6 +7,8 @@ import {
 } from '../lib/api.js';
 
 import './EventsListPage.css';
+import { FilterBar } from '../components/ui/FilterBar.jsx';
+import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { formatEventScheduleSummary } from '../lib/eventScheduleUtils.js';
 import { EventViewModal } from './EventViewModal';
 
@@ -98,13 +100,20 @@ export function EventsListPage() {
     loadEventsWithParticipants();
   }, []);
 
-  const filteredEvents = events.filter((event) => {
-    const matchesSearch = event.event_name?.toLowerCase().includes(search.toLowerCase());
-    const matchesLevel = !levelFilter || event.event_level === levelFilter;
-    const matchesType = !typeFilter || event.event_type_name === typeFilter;
-    const matchesPeriod = eventInDateRange(event, dateFrom, dateTo);
-    return matchesSearch && matchesLevel && matchesType && matchesPeriod;
-  });
+  const filteredEvents = events
+    .filter((event) => {
+      const matchesSearch = event.event_name?.toLowerCase().includes(search.toLowerCase());
+      const matchesLevel = !levelFilter || event.event_level === levelFilter;
+      const matchesType = !typeFilter || event.event_type_name === typeFilter;
+      const matchesPeriod = eventInDateRange(event, dateFrom, dateTo);
+      return matchesSearch && matchesLevel && matchesType && matchesPeriod;
+    })
+    .sort((left, right) => {
+      const leftDate = toIsoDate(left.start_date) || '9999-12-31';
+      const rightDate = toIsoDate(right.start_date) || '9999-12-31';
+      return leftDate.localeCompare(rightDate)
+        || String(left.event_name || '').localeCompare(String(right.event_name || ''), 'ru');
+    });
 
   const uniqueLevels = [...new Set(events.map((e) => e.event_level).filter(Boolean))];
 
@@ -133,7 +142,11 @@ export function EventsListPage() {
     e.stopPropagation();
     window.location.hash = `edit-event?id=${id}`;
   };
-
+ //  переход на страницу деталей мероприятия
+  const goToDetails = (id, e) => {
+    e.stopPropagation();
+    window.location.hash = `event-details?id=${id}`;
+  };
   if (loading) {
     return (
       <div className="events-list-page">
@@ -145,77 +158,43 @@ export function EventsListPage() {
   return (
     <div className="events-list-page">
       <div className="events-list-header">
-        <div className="top-navigation">
-          <button type="button" className="back-home-button" onClick={() => { window.location.hash = ''; }}>
-            ← На главную
-          </button>
-        </div>
+        <PageHeader
+          title="Мероприятия"
+          backLabel="← На главную"
+          onBack={() => { window.location.hash = ''; }}
+          variant="events"
+          actions={(
+            <>
+              <button type="button" className="add-event-button" onClick={() => { window.location.hash = 'create-event'; }}>
+                Добавить мероприятие
+              </button>
+              <div className="events-total-count">Найдено: {filteredEvents.length}</div>
+            </>
+          )}
+        />
 
-        <div className="header-main-row">
-          <h1 className="events-list-title">Мероприятия</h1>
-
-          <div className="events-list-controls">
-            <button type="button" className="add-event-button" onClick={() => { window.location.hash = 'create-event'; }}>
-              Добавить мероприятие
-            </button>
-            <div className="events-total-count">Найдено: {filteredEvents.length}</div>
-          </div>
-        </div>
-
-        <div className="events-filters">
-          <input
-            type="text"
-            placeholder="Поиск по названию..."
-            className="events-search-input"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-
-          <select className="events-filter-select" value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)}>
-            <option value="">Все уровни</option>
-            {uniqueLevels.map((level) => (
-              <option key={level} value={level}>{level}</option>
-            ))}
-          </select>
-
-          <select className="events-filter-select" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-            <option value="">Все типы</option>
-            {typeOptions.map((typeName) => (
-              <option key={typeName} value={typeName}>{typeName}</option>
-            ))}
-          </select>
-
-          <span className="events-filter-period-label">Период:</span>
-          <input
-            type="date"
-            className="events-filter-date"
-            aria-label="Дата с"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-          />
-          <span className="events-filter-period-dash">—</span>
-          <input
-            type="date"
-            className="events-filter-date"
-            aria-label="Дата по"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-          />
-
-          <button
-            type="button"
-            className="events-reset-filters"
-            onClick={() => {
+        <FilterBar
+          searchValue={search}
+          searchPlaceholder="Поиск по названию..."
+          onSearchChange={setSearch}
+          levelValue={levelFilter}
+          levelOptions={uniqueLevels}
+          onLevelChange={setLevelFilter}
+          typeValue={typeFilter}
+          typeOptions={typeOptions}
+          onTypeChange={setTypeFilter}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          onDateFromChange={setDateFrom}
+          onDateToChange={setDateTo}
+          onReset={() => {
               setSearch('');
               setLevelFilter('');
               setTypeFilter('');
               setDateFrom('');
               setDateTo('');
             }}
-          >
-            Сбросить
-          </button>
-        </div>
+        />
       </div>
 
       <div className="events-grid">
@@ -223,15 +202,23 @@ export function EventsListPage() {
           filteredEvents.map((event) => (
             <div
               key={event.event_id}
-              className="event-card"
+              className="event-card app-card"
               onClick={() => setSelectedEvent(event)}
               style={{ cursor: 'pointer' }}
             >
               <div className="event-actions">
-                <button type="button" className="action-btn edit-btn" title="Отредактировать" onClick={(e) => goToEdit(event.event_id, e)}>
+                 <button
+                  type="button"
+                  className="action-btn app-icon-button details-btn"
+                  title="Статистика"
+                  onClick={(e) => goToDetails(event.event_id, e)}
+                >
+                  📶
+                   </button>
+          <button type="button" className="action-btn app-icon-button edit-btn" title="Отредактировать" onClick={(e) => goToEdit(event.event_id, e)}>
                   ✎
                 </button>
-                <button type="button" className="action-btn delete-btn" title="Удалить мероприятие" onClick={(e) => deleteEvent(event.event_id, e)}>
+                <button type="button" className="action-btn app-icon-button delete-btn" title="Удалить мероприятие" onClick={(e) => deleteEvent(event.event_id, e)}>
                   ×
                 </button>
               </div>

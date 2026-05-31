@@ -37,8 +37,8 @@
 
 /* Блок мероприятия */
 .form-section {
-  background: #eef4fb;
-  border-radius: 12px;
+  background: var(--app-color-soft);
+  border-radius: var(--app-radius-md);
   padding: 24px;
 }
 
@@ -73,8 +73,8 @@
   min-height: 42px;
   padding: 10px 14px;
   border: 1px solid #b8c6d7;
-  border-radius: 8px;
-  background: #ffffff;
+  border-radius: var(--app-radius-sm);
+  background: var(--app-color-page);
   font-family: inherit;
   font-size: 0.95rem;
   color: #22384a;
@@ -89,7 +89,7 @@
 select.events-form__control {
   cursor: pointer;
   appearance: none;
-  background-image: url("image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233d6ca6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233d6ca6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 16px;
@@ -102,8 +102,8 @@ textarea.events-form__control {
 
 /* Блок участников */
 .participants-section {
-  background: #eef4fb;
-  border-radius: 12px;
+  background: var(--app-color-soft);
+  border-radius: var(--app-radius-md);
   padding: 24px;
 }
 
@@ -215,223 +215,13 @@ textarea.events-form__control {
   font-size: 0.9rem;
 }
 
-/* Обертка карточки + кнопка удаления */
-.participant-wrapper {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-/* Карточка участника */
-.participant-card {
-  flex: 1;
-  border: 1px solid #397AB2;
+.participants-table__spravka-error {
+  margin: 0 0 12px;
+  padding: 10px 14px;
   border-radius: 8px;
-  /* overflow: visible;  <- Важно для выпадающего списка */
-  overflow: visible; 
-  background: #f8fafc;
-}
-
-/* Кнопка удаления участника (снаружи) */
-.participant-card__remove-outside {
-  width: 28px;
-  height: 28px;
-  font-size: 2rem;
-  font-weight: 700;
-  line-height: 1;
-  color: #397AB2;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 14px;
-  transition: color 0.2s, transform 0.2s;
-}
-
-.participant-card__remove-outside:hover {
-  color: #e74c3c;
-  transform: scale(1.1);
-}
-
-/* Верхняя строка карточки: ФИО | Роль | Телефон */
-.participant-card__main {
-  display: grid;
-  grid-template-columns: 1fr 140px 1fr;
-  align-items: center;
-  gap: 16px;
-  padding: 14px 16px;
-  background: #ffffff;
-  border-bottom: 1px solid #e0e8f0;
-  width: 100%;
-  border-radius: 8px 8px 0 0; /* Скругление только сверху */
-}
-
-.participant-card__fio {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #b8c6d7;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  background: #ffffff;
-  min-width: 0;
-}
-
-.participant-card__fio:focus {
-  outline: none;
-  border-color: #397AB2;
-}
-
-.participant-card__role {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid #b8c6d7;
-  border-radius: 6px;
+  background: #fef2f2;
+  color: #b91c1c;
   font-size: 0.9rem;
-  background: #ffffff;
-  cursor: pointer;
-}
-
-.participant-card__phone {
-  width: 100%;
-  padding: 8px 12px 8px 0;
-  border: none;
-  background: transparent;
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: #1e293b;
-  text-align: right;
-  cursor: not-allowed;
-  letter-spacing: 0.3px;
-}
-
-/* Нижняя строка карточки - время */
-.participant-card__time {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 16px;
-  background: #f8fafc;
-  border-radius: 0 0 8px 8px; /* Скругление только снизу */
-}
-
-.participant-card__duration {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #397AB2;
-  font-size: 0.85rem;
-  font-weight: 500;
-  white-space: nowrap;
-  min-width: 60px;
-}
-
-.participant-card__clock-icon {
-  flex-shrink: 0;
-}
-
-.participant-card__slots {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-}
-
-/* Ввод временного слота */
-.time-slot-input {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border: 1px solid #397AB2;
-  border-radius: 6px;
-  background: #ffffff;
-  font-size: 0.85rem;
-  min-width: 290px;
-}
-
-.time-slot-input__date {
-  width: 125px;
-  min-width: 110px;
-  border: none;
-  background: transparent;
-  padding: 2px 4px;
-  font-size: 0.85rem;
-  color: #333;
-}
-
-.time-slot-input__time {
-  width: 90px;
-  min-width: 80px;
-  border: none;
-  background: transparent;
-  padding: 2px 4px 2px 8px;
-  font-size: 0.85rem;
-  color: #333;
-  text-align: left;
-}
-
-.time-slot-input__time::-webkit-calendar-picker-indicator {
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-}
-
-.time-slot-input__separator {
-  color: #999;
-  font-weight: 500;
-  user-select: none;
-  margin: 0 2px;
-}
-
-.time-slot-input__date:focus,
-.time-slot-input__time:focus {
-  outline: none;
-  background: #f0f4f8;
-  border-radius: 4px;
-}
-
-.time-slot-input__remove {
-  width: 18px;
-  height: 18px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-  color: #999;
-  padding: 0;
-  border-radius: 2px;
-  transition: color 0.2s;
-}
-
-.time-slot-input__remove:hover {
-  color: #e74c3c;
-}
-
-/* Кнопка добавления времени */
-.participant-card__add-time {
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  color: #397AB2;
-  font-size: 1.4rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  transition: background 0.2s;
-}
-
-.participant-card__add-time:hover {
-  background: #e0e8f0;
 }
 
 /* Контейнер для плюса по центру (в развернутом виде) */
@@ -440,47 +230,6 @@ textarea.events-form__control {
   justify-content: center;
   align-items: center;
   margin-top: 16px;
-}
-
-/* ===== АВТОДОПОЛНЕНИЕ ФИО (НОВОЕ) ===== */
-.student-input-wrapper {
-  position: relative;
-  width: 100%;
-  z-index: 100; /* Чтобы выпадающий список был поверх других элементов */
-}
-
-.student-suggestions {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  z-index: 9999; 
-  background: #ffffff;
-  border: 1px solid #b8c6d7;
-  border-top: none;
-  border-radius: 0 0 8px 8px;
-  max-height: 300px;
-  overflow-y: auto;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.student-suggestion-item {
-  padding: 10px 14px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  color: #22384a;
-  transition: background 0.15s;
-}
-
-.student-suggestion-item:hover {
-  background: #eef4fb;
-}
-
-.student-suggestion-item:active {
-  background: #dce6f0;
 }
 
 /* ===== БЛОК ВАЛИДАЦИИ И КНОПКИ ===== */
@@ -587,38 +336,6 @@ textarea.events-form__control {
     gap: 6px;
   }
   
-  .participant-wrapper {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .participant-card__remove-outside {
-    align-self: flex-end;
-    margin-top: -40px;
-    margin-right: 8px;
-  }
-  
-  .participant-card__main {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-  
-  .participant-card__phone {
-    text-align: left;
-    font-size: 1rem;
-  }
-  
-  .participant-card__time {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .time-slot-input {
-    width: 100%;
-    min-width: auto;
-    flex-wrap: wrap;
-  }
-  
   /* На мобильных всё в одну колонку */
   .form-actions {
     grid-template-columns: 1fr;
@@ -719,6 +436,13 @@ textarea.events-form__control {
   border-radius: 6px;
   border: 1px solid #e0ecf5;
   font-size: 0.95rem;
+}
+
+.event-view-modal__hero {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
 }
 
 @media (max-width: 720px) {

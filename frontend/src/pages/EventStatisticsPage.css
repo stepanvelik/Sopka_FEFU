@@ -1,0 +1,121 @@
+.event-statistics-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+}
+
+.event-statistics-page__hint {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.event-statistics-page__panel {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(260px, 0.7fr) auto;
+  align-items: end;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.event-statistics-page__label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.event-statistics-page__select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 0.95rem;
+}
+
+.event-statistics-page__preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #33485c;
+  font-size: 0.9rem;
+}
+
+.event-statistics-page__docs-link {
+  align-self: end;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #005baa;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.event-statistics-page__docs-link:hover,
+.event-statistics-page__docs-link:focus-visible {
+  background: #eef4fb;
+  outline: none;
+}
+
+.event-statistics-page__docs-link--disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.event-statistics-page__status,
+.event-statistics-page__empty {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 8px;
+  color: #33485c;
+  background: #eef4fb;
+}
+
+.event-statistics-page__status--error {
+  color: #8c2f28;
+  background: #fde9e7;
+}
+
+.event-statistics-page__back-link {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.event-statistics-page__back-link-btn {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.event-statistics-page__back-link-btn:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+@media (max-width: 980px) {
+  .event-statistics-page__panel {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .event-statistics-page__docs-link {
+    justify-self: start;
+  }
+}

@@ -1,6 +1,5 @@
 .events-list-page {
   padding: 20px;
-  font-family: 'Inter', sans-serif;
 }
 
 .events-list-header {
@@ -49,11 +48,11 @@
 }
 
 .add-event-button {
-  background-color: #0055a6;
-  color: white;
+  background-color: var(--app-color-primary-strong);
+  color: #ffffff;
   border: none;
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: var(--app-radius-sm);
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
@@ -61,7 +60,7 @@
 
 .events-total-count {
   font-size: 14px;
-  color: #666;
+  color: var(--app-color-muted);
 }
 
 .events-grid {
@@ -71,16 +70,14 @@
 }
 
 .event-card {
-  background: #f8fbff;
-  border: 1px solid #e1e8f0;
-  border-radius: 12px;
+  background: var(--app-color-soft-card);
   padding: 15px;
   position: relative;
   transition: all 0.2s ease;
 }
 
 .event-card:hover {
-  border-color: #2c509a;
+  border-color: var(--app-color-primary);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
@@ -100,15 +97,8 @@
 }
 
 .action-btn {
-  background: white;
-  border: 1px solid #e1e8f0;
-  border-radius: 6px;
   width: 32px;
   height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
   font-size: 16px;
 }
 
@@ -123,16 +113,16 @@
 }
 
 .event-card-header {
-  border: 1px solid #999;
-  border-radius: 8px;
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-sm);
   padding: 10px 15px;
-  background: white;
+  background: var(--app-color-page);
   margin-bottom: 12px;
 }
 
 .event-card-name {
   font-size: 18px;
-  color: #333;
+  color: var(--app-color-text);
 }
 
 .event-card-body {
@@ -154,7 +144,7 @@
   padding: 4px 10px;
   border-radius: 8px;
   background: #e8f1fb;
-  color: #1a4a7a;
+  color: var(--app-color-title);
   font-weight: 600;
 }
 
@@ -163,8 +153,8 @@
   padding: 4px 10px;
   border-radius: 8px;
   background: #f0f4f8;
-  color: #444;
-  border: 1px solid #dde5ee;
+  color: #33485c;
+  border: 1px solid var(--app-color-border);
 }
 
 .event-card-type--muted {
@@ -194,7 +184,7 @@
   justify-content: space-between;
   align-items: center;
   font-size: 14px;
-  color: #777;
+  color: var(--app-color-muted);
 }
 
 .event-card-participants {
@@ -205,19 +195,19 @@
 
 .participants-label {
   font-weight: 600;
-  color: #333;
+  color: var(--app-color-text);
 }
 
 .participants-badge {
-  border: 1px solid #999;
-  border-radius: 6px;
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-sm);
   min-width: 40px;
   height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
-  color: #333;
+  background: var(--app-color-page);
+  color: var(--app-color-text);
 }
 
 .empty-state {
@@ -276,4 +266,36 @@
 
 .events-reset-filters:hover {
   background: #2f6694;
+}
+.events-list__item-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.events-list__action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  color: #6b7a8a;
+}
+
+.events-list__action-btn:hover {
+  background: #f0f2f5;
+}
+
+.events-list__action-btn--details:hover {
+  color: #005BAA;
+  background: #e8f0fe;
+}
+
+.events-list__action-btn--edit:hover {
+  color: #f59e0b;
+  background: #fef3e8;
 }

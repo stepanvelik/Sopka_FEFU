@@ -7,3 +7,5 @@ pydantic-settings>=2.6.0
 python-multipart>=0.0.9
 pandas>=2.2.0
 openpyxl>=3.1.0
+pymorphy3>=2.0.0
+pymorphy3-dicts-ru>=2.4.0

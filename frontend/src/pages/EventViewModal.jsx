@@ -1,14 +1,31 @@
 import { useState, useEffect } from 'react';
 import { getEventType, listEventParticipants, listStudents } from '../lib/api.js';
 import { formatPhone } from '../lib/participantUtils.js';
+import { downloadSpravkaForStudent } from '../lib/spravkaUtils.js';
 import {
   formatRuDateShort,
   formatTimeDisplay,
 } from '../lib/eventScheduleUtils.js';
+import '../components/EventParticipantFields.css';
 import './EventCreatePage.css';
 
 function getStudentName(student) {
   return [student?.last_name, student?.first_name, student?.middle_name].filter(Boolean).join(' ');
+}
+
+function getTimeSlotsText(timeSlots) {
+  const parts = (timeSlots || [])
+    .map((slot) => {
+      const date = formatRuDateShort(slot.participation_date);
+      const start = formatTimeDisplay(slot.start_time);
+      const end = formatTimeDisplay(slot.end_time);
+      const hours = Number(slot.participation_hours || 0);
+      const hoursText = hours > 0 ? `, ${hours.toLocaleString('ru-RU')} ч.` : '';
+      return date && start && end ? `${date}: ${start}–${end}${hoursText}` : '';
+    })
+    .filter(Boolean);
+
+  return parts.join('; ');
 }
 
 export function EventViewModal({ event, onClose }) {
@@ -16,6 +33,8 @@ export function EventViewModal({ event, onClose }) {
   const [eventTypeName, setEventTypeName] = useState('—');
   const [participants, setParticipants] = useState([]);
   const [studentsById, setStudentsById] = useState({});
+  const [spravkaLoadingStudentId, setSpravkaLoadingStudentId] = useState(null);
+  const [spravkaError, setSpravkaError] = useState('');
 
   // Загружаем название типа мероприятия
   useEffect(() => {
@@ -73,6 +92,25 @@ export function EventViewModal({ event, onClose }) {
     return () => { isMounted = false; };
   }, [event]);
 
+  async function handleCreateSpravka(participant) {
+    if (!event?.event_id || !participant?.student_id) {
+      return;
+    }
+
+    setSpravkaLoadingStudentId(participant.student_id);
+    setSpravkaError('');
+    try {
+      await downloadSpravkaForStudent({
+        studentId: participant.student_id,
+        eventId: event.event_id,
+      });
+    } catch (err) {
+      setSpravkaError(err instanceof Error ? err.message : 'Не удалось сформировать справку.');
+    } finally {
+      setSpravkaLoadingStudentId(null);
+    }
+  }
+
   if (!event) return null;
 
   const hasDailySchedule = Array.isArray(event.event_daily_schedule)
@@ -82,30 +120,20 @@ export function EventViewModal({ event, onClose }) {
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="event-create-page" style={{ padding: 0 }}>
-          <div className="event-create-page__hero" style={{ 
-            display: 'flex', 
-            flexDirection: 'row', 
-            justifyContent: 'space-between', 
-            alignItems: 'center' 
-          }}>
+          <div className="event-create-page__hero event-view-modal__hero">
             <h1 className="event-create-page__title">Мероприятие</h1>
             
             <button 
-              className="modal-close-btn" 
+              type="button"
+              className="modal-close-btn app-icon-button app-icon-button--close" 
               onClick={onClose} 
               title="Закрыть"
-              style={{ 
-                position: 'static',
-                fontSize: '32px', 
-                padding: '0 10px'
-              }}
-            >
-              ✕
-            </button>
+              aria-label="Закрыть"
+            />
           </div>
 
           <div className="event-create-page__form">
-            <div className="form-section">
+            <div className="form-section app-panel">
               <div className="events-form__grid">
                 <div className="events-form__field">
                   <label className="events-form__label">Название</label>
@@ -178,12 +206,16 @@ export function EventViewModal({ event, onClose }) {
               </div>
               {isParticipantsExpanded && (
                 <div className="participants-table">
+                  {spravkaError ? (
+                    <p className="participants-table__spravka-error">{spravkaError}</p>
+                  ) : null}
                   <div className="participants-section__count">Всего: {participants.length}</div>
                   {participants.length === 0 ? (
                     <div className="participants-table__empty">Участники пока не привязаны.</div>
                   ) : (
                     participants.map((participant) => {
                       const student = studentsById[participant.student_id];
+                      const timeSlotsText = getTimeSlotsText(participant.time_slots);
                       return (
                         <div className="participant-card" key={participant.participation_id}>
                           <div className="participant-card__main">
@@ -191,9 +223,23 @@ export function EventViewModal({ event, onClose }) {
                             <input className="participant-card__role" value={participant.role_name} readOnly />
                             <input className="participant-card__phone" value={formatPhone(student?.phone) || '—'} readOnly />
                           </div>
-                          {participant.notes ? (
+                          {timeSlotsText || participant.notes ? (
                             <div className="participant-card__time">
-                              <span className="participant-card__duration-text">{participant.notes}</span>
+                              <span className="participant-card__duration-text">{timeSlotsText || participant.notes}</span>
+                            </div>
+                          ) : null}
+                          {participant.student_id ? (
+                            <div className="participant-card__spravka-wrap">
+                              <button
+                                type="button"
+                                className="spravka-btn"
+                                disabled={String(spravkaLoadingStudentId) === String(participant.student_id)}
+                                onClick={() => handleCreateSpravka(participant)}
+                              >
+                                {String(spravkaLoadingStudentId) === String(participant.student_id)
+                                  ? 'Формирование...'
+                                  : 'Создать справку'}
+                              </button>
                             </div>
                           ) : null}
                         </div>
