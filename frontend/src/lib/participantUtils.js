@@ -65,15 +65,27 @@ export function findStudentByPhone(studentsList, phone) {
   return studentsList.find((student) => normalizePhoneDigits(student.phone) === digits) || null;
 }
 
-export function getParticipantValidationMessages(participants) {
+export function getParticipantValidationMessages(participants, options = {}) {
+  const { allowedDates = null, validateIdentity = true } = options;
+  const allowedDateSet = Array.isArray(allowedDates)
+    ? new Set(allowedDates.filter(Boolean))
+    : null;
   const messages = [];
   participants.forEach((participant, index) => {
     const number = index + 1;
-    if (!(participant.fio || '').trim()) {
+    if (validateIdentity && !(participant.fio || '').trim()) {
       messages.push(`Укажите ФИО участника ${number}.`);
     }
-    if (!isValidPhone(participant.phone)) {
+    if (validateIdentity && !isValidPhone(participant.phone)) {
       messages.push(`Укажите корректный телефон участника ${number}.`);
+    }
+    if (allowedDateSet) {
+      const hasInvalidSlotDate = (participant.timeSlots || []).some(
+        (slot) => slot.date && !allowedDateSet.has(slot.date),
+      );
+      if (hasInvalidSlotDate) {
+        messages.push(`Дата участия участника ${number} должна входить в даты мероприятия.`);
+      }
     }
   });
   return messages;

@@ -64,6 +64,25 @@ export function sumScheduleHours(rows) {
   return Math.round(total * 2) / 2;
 }
 
+export function formatHoursMinutes(value, emptyValue = '') {
+  const number = Number(value || 0);
+  if (!Number.isFinite(number) || number <= 0) return emptyValue;
+
+  const totalMinutes = Math.round(number * 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const parts = [];
+
+  if (hours > 0) {
+    parts.push(`${hours} \u0447.`);
+  }
+  if (minutes > 0) {
+    parts.push(`${minutes} \u043c\u0438\u043d.`);
+  }
+
+  return parts.join(' ') || emptyValue;
+}
+
 export function formatRuDateShort(isoDate) {
   if (!isoDate) return '';
   const d = new Date(`${String(isoDate).slice(0, 10)}T12:00:00`);

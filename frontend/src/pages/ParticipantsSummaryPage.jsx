@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { FilterBar } from '../components/ui/FilterBar.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { getParticipantsSummaryReport, listEventTypes } from '../lib/api.js';
+import { formatHoursMinutes } from '../lib/eventScheduleUtils.js';
 import './ParticipantsSummaryPage.css';
 
 const eventLevelOptions = [
@@ -31,8 +32,7 @@ function formatPhone(value) {
 }
 
 function formatHours(value) {
-  const number = Number(value || 0);
-  return number > 0 ? number.toLocaleString('ru-RU', { maximumFractionDigits: 2 }) : '';
+  return formatHoursMinutes(value, '');
 }
 
 function formatDate(value) {

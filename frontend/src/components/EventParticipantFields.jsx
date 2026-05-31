@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { formatHoursMinutes, formatRuDateShort } from '../lib/eventScheduleUtils.js';
 import { formatPhone, normalizePhoneDigits, roleOptions } from '../lib/participantUtils.js';
 import './EventParticipantFields.css';
 
@@ -79,10 +80,38 @@ export function StudentNameInput({ value, studentsList, onSelectStudent, onChang
   );
 }
 
-function TimeSlotInput({ slot, onChange, onRemove, readOnly = false }) {
+function TimeSlotInput({ slot, onChange, onRemove, readOnly = false, dateOptions = null }) {
+  const hasDateOptions = Array.isArray(dateOptions);
+  const isInvalidSelectedDate = hasDateOptions && slot.date && !dateOptions.includes(slot.date);
+
   return (
     <div className="time-slot-input">
-      <input type="date" className="time-slot-input__date" value={slot.date} onChange={(e) => onChange('date', e.target.value)} readOnly={readOnly} />
+      {hasDateOptions ? (
+        <select
+          className="time-slot-input__date"
+          value={slot.date || ''}
+          onChange={(e) => onChange('date', e.target.value)}
+          disabled={readOnly || dateOptions.length === 0}
+        >
+          {!slot.date ? (
+            <option value="">
+              {dateOptions.length > 0 ? 'Выберите день' : 'Нет дней'}
+            </option>
+          ) : null}
+          {isInvalidSelectedDate ? (
+            <option value={slot.date} disabled>
+              {slot.date}
+            </option>
+          ) : null}
+          {dateOptions.map((date) => (
+            <option key={date} value={date}>
+              {formatRuDateShort(date)}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input type="date" className="time-slot-input__date" value={slot.date} onChange={(e) => onChange('date', e.target.value)} readOnly={readOnly} />
+      )}
       <input type="time" className="time-slot-input__time" value={slot.start} onChange={(e) => onChange('start', e.target.value)} readOnly={readOnly} />
       <span className="time-slot-input__separator">-</span>
       <input type="time" className="time-slot-input__time" value={slot.end} onChange={(e) => onChange('end', e.target.value)} readOnly={readOnly} />
@@ -107,9 +136,14 @@ export function ParticipantCard({
   readOnly = false,
   readOnlyIdentity = false,
   showTimeSlots = true,
+  availableDates = null,
 }) {
   const identityLocked = readOnly || readOnlyIdentity;
-  const totalDuration = (participant.timeSlots || []).reduce((sum, slot) => {
+  const timeSlots = participant.timeSlots || [];
+  const availableDateOptions = Array.isArray(availableDates)
+    ? availableDates.filter(Boolean)
+    : null;
+  const totalDuration = timeSlots.reduce((sum, slot) => {
     if (slot.start && slot.end) {
       const [sh, sm] = slot.start.split(':').map(Number);
       const [eh, em] = slot.end.split(':').map(Number);
@@ -118,10 +152,19 @@ export function ParticipantCard({
     }
     return sum;
   }, 0);
-  const durationHours = (totalDuration / 60).toFixed(1).replace(/\.0$/, '');
+  const durationText = formatHoursMinutes(totalDuration / 60, '0 \u0447.');
   const canCreateSpravka = Boolean(onCreateSpravka && participant.student_id);
   const isSpravkaLoading = canCreateSpravka
     && String(spravkaLoadingStudentId) === String(participant.student_id);
+  const usedDates = new Set(timeSlots.map((slot) => slot.date).filter(Boolean));
+  const canAddTimeSlot = availableDateOptions
+    ? availableDateOptions.some((date) => !usedDates.has(date))
+    : true;
+  const addTimeSlotTitle = availableDateOptions
+    ? (availableDateOptions.length === 0
+        ? 'Сначала укажите даты мероприятия'
+        : (canAddTimeSlot ? 'Добавить день участия' : 'Все дни мероприятия уже добавлены'))
+    : 'Добавить день участия';
 
   return (
     <div className="participant-wrapper">
@@ -177,20 +220,41 @@ export function ParticipantCard({
                 <circle cx="8" cy="8" r="7" stroke="#397AB2" strokeWidth="1.5" />
                 <path d="M8 4V8L11 10" stroke="#397AB2" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              <span className="participant-card__duration-text">{durationHours} ч.</span>
+              <span className="participant-card__duration-text">{durationText}</span>
             </div>
             <div className="participant-card__slots">
-              {(participant.timeSlots || []).map((slot, slotIdx) => (
-                <TimeSlotInput
-                  key={slotIdx}
-                  slot={slot}
-                  onChange={(field, value) => onUpdateTimeSlot(index, slotIdx, field, value)}
-                  onRemove={() => onRemoveTimeSlot(index, slotIdx)}
-                  readOnly={readOnly}
-                />
-              ))}
+              {timeSlots.map((slot, slotIdx) => {
+                const usedByOtherSlots = new Set(
+                  timeSlots
+                    .filter((_, indexInList) => indexInList !== slotIdx)
+                    .map((timeSlot) => timeSlot.date)
+                    .filter(Boolean),
+                );
+                const slotDateOptions = availableDateOptions
+                  ? availableDateOptions.filter((date) => date === slot.date || !usedByOtherSlots.has(date))
+                  : null;
+
+                return (
+                  <TimeSlotInput
+                    key={slotIdx}
+                    slot={slot}
+                    dateOptions={slotDateOptions}
+                    onChange={(field, value) => onUpdateTimeSlot(index, slotIdx, field, value)}
+                    onRemove={() => onRemoveTimeSlot(index, slotIdx)}
+                    readOnly={readOnly}
+                  />
+                );
+              })}
               {!readOnly ? (
-                <button type="button" className="participant-card__add-time" onClick={() => onAddTimeSlot(index)}>+</button>
+                <button
+                  type="button"
+                  className="participant-card__add-time"
+                  onClick={() => onAddTimeSlot(index)}
+                  disabled={!canAddTimeSlot}
+                  title={addTimeSlotTitle}
+                >
+                  +
+                </button>
               ) : null}
             </div>
           </div>

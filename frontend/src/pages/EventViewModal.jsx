@@ -3,6 +3,7 @@ import { getEventType, listEventParticipants, listStudents } from '../lib/api.js
 import { formatPhone } from '../lib/participantUtils.js';
 import { downloadSpravkaForStudent } from '../lib/spravkaUtils.js';
 import {
+  formatHoursMinutes,
   formatRuDateShort,
   formatTimeDisplay,
 } from '../lib/eventScheduleUtils.js';
@@ -20,7 +21,7 @@ function getTimeSlotsText(timeSlots) {
       const start = formatTimeDisplay(slot.start_time);
       const end = formatTimeDisplay(slot.end_time);
       const hours = Number(slot.participation_hours || 0);
-      const hoursText = hours > 0 ? `, ${hours.toLocaleString('ru-RU')} ч.` : '';
+      const hoursText = hours > 0 ? `, ${formatHoursMinutes(hours)}` : '';
       return date && start && end ? `${date}: ${start}–${end}${hoursText}` : '';
     })
     .filter(Boolean);

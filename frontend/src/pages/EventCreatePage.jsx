@@ -242,10 +242,11 @@ export function EventCreatePage() {
     setParticipants((prev) => prev.map((p, i) => {
       if (i !== index) return p;
       const usedDates = new Set((p.timeSlots || []).map((s) => s.date));
-      const nextRow = scheduleRows.find((row) => row.date && !usedDates.has(row.date)) || scheduleRows[0];
-      const newSlot = nextRow
-        ? { date: nextRow.date, start: nextRow.start || '', end: nextRow.end || '' }
-        : { date: '', start: '', end: '' };
+      const nextRow = scheduleRows.find((row) => row.date && !usedDates.has(row.date));
+      if (!nextRow) {
+        return p;
+      }
+      const newSlot = { date: nextRow.date, start: nextRow.start || '', end: nextRow.end || '' };
       return { ...p, timeSlots: [...p.timeSlots, newSlot] };
     }));
   }
@@ -257,19 +258,26 @@ export function EventCreatePage() {
   function updateTimeSlot(index, slotIdx, field, value) {
     setParticipants((prev) => prev.map((p, i) => {
       if (i !== index) return p;
+      if (field === 'date' && value && !eventDates.includes(value)) return p;
       const newSlots = [...p.timeSlots];
       newSlots[slotIdx] = { ...newSlots[slotIdx], [field]: value };
       return { ...p, timeSlots: newSlots };
     }));
   }
 
+  const eventDates = scheduleRows.map((row) => row.date).filter(Boolean);
+
   function canSubmit() {
-    return getValidationMessages(formData).length === 0 && getParticipantValidationMessages(participants).length === 0;
+    return getValidationMessages(formData).length === 0
+      && getParticipantValidationMessages(participants, { allowedDates: eventDates }).length === 0;
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
-    const validationMessages = [...getValidationMessages(formData), ...getParticipantValidationMessages(participants)];
+    const validationMessages = [
+      ...getValidationMessages(formData),
+      ...getParticipantValidationMessages(participants, { allowedDates: eventDates }),
+    ];
     if (validationMessages.length > 0) {
       setStatus({ type: 'error', messages: validationMessages });
       return;
@@ -360,7 +368,10 @@ export function EventCreatePage() {
   }
 
   const isValid = canSubmit();
-  const validationMessages = [...getValidationMessages(formData), ...getParticipantValidationMessages(participants)];
+  const validationMessages = [
+    ...getValidationMessages(formData),
+    ...getParticipantValidationMessages(participants, { allowedDates: eventDates }),
+  ];
   const actionValidationMessages = status.type === 'error' && status.messages?.length
     ? status.messages
     : validationMessages;
@@ -432,6 +443,7 @@ export function EventCreatePage() {
                       participant={participant}
                       index={idx}
                       studentsList={studentsCache}
+                      availableDates={eventDates}
                       onRemove={removeParticipant}
                       onAddTimeSlot={addTimeSlot}
                       onRemoveTimeSlot={removeTimeSlot}

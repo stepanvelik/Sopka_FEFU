@@ -391,10 +391,11 @@ export function EventEditPage() {
     setParticipants((prev) => prev.map((p, i) => {
       if (i !== index) return p;
       const usedDates = new Set((p.timeSlots || []).map((s) => s.date));
-      const nextRow = scheduleRows.find((row) => row.date && !usedDates.has(row.date)) || scheduleRows[0];
-      const newSlot = nextRow
-        ? { date: nextRow.date, start: nextRow.start || '', end: nextRow.end || '' }
-        : { date: '', start: '', end: '' };
+      const nextRow = scheduleRows.find((row) => row.date && !usedDates.has(row.date));
+      if (!nextRow) {
+        return p;
+      }
+      const newSlot = { date: nextRow.date, start: nextRow.start || '', end: nextRow.end || '' };
       return { ...p, timeSlots: [...p.timeSlots, newSlot] };
     }));
   }
@@ -406,6 +407,7 @@ export function EventEditPage() {
   function updateTimeSlot(index, slotIdx, field, value) {
     setParticipants((prev) => prev.map((p, i) => {
       if (i !== index) return p;
+      if (field === 'date' && value && !eventDates.includes(value)) return p;
       const newSlots = [...p.timeSlots];
       newSlots[slotIdx] = { ...newSlots[slotIdx], [field]: value };
       return { ...p, timeSlots: newSlots };
@@ -429,13 +431,17 @@ export function EventEditPage() {
     setParticipants((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
   }
 
+  const eventDates = scheduleRows.map((row) => row.date).filter(Boolean);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const newParticipants = participants.filter((participant) => !participant.isPersisted);
+    const persistedParticipants = participants.filter((participant) => participant.isPersisted);
     const validationMessages = [
       ...getValidationMessages(formData),
-      ...getParticipantValidationMessages(newParticipants),
+      ...getParticipantValidationMessages(newParticipants, { allowedDates: eventDates }),
+      ...getParticipantValidationMessages(persistedParticipants, { allowedDates: eventDates, validateIdentity: false }),
     ];
     if (validationMessages.length > 0) {
       setActionErrors(validationMessages);
@@ -522,9 +528,12 @@ export function EventEditPage() {
     }
   };
 
+  const newParticipantsForValidation = participants.filter((participant) => !participant.isPersisted);
+  const persistedParticipantsForValidation = participants.filter((participant) => participant.isPersisted);
   const validationMessages = [
     ...getValidationMessages(formData),
-    ...getParticipantValidationMessages(participants.filter((participant) => !participant.isPersisted)),
+    ...getParticipantValidationMessages(newParticipantsForValidation, { allowedDates: eventDates }),
+    ...getParticipantValidationMessages(persistedParticipantsForValidation, { allowedDates: eventDates, validateIdentity: false }),
   ];
   const actionValidationMessages = actionErrors.length > 0 ? actionErrors : validationMessages;
   const isValid = validationMessages.length === 0;
@@ -620,6 +629,7 @@ export function EventEditPage() {
                       studentsList={studentsCache}
                       readOnlyIdentity={participant.isPersisted}
                       showTimeSlots
+                      availableDates={eventDates}
                       onCreateSpravka={participant.isPersisted && participant.student_id ? handleCreateSpravka : undefined}
                       spravkaLoadingStudentId={spravkaLoadingStudentId}
                       onRemove={handleRemoveParticipant}

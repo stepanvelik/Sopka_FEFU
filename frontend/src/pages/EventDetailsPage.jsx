@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getEvent, getStudent, listEventParticipants } from '../lib/api';
-import { enumerateEventDates, formatRuDateShort } from '../lib/eventScheduleUtils.js';
+import { enumerateEventDates, formatHoursMinutes, formatRuDateShort } from '../lib/eventScheduleUtils.js';
 import { formatPhone, getStudentFullName } from '../lib/participantUtils.js';
 import '../components/EventParticipantFields.css';
 import './EventDetailsPage.css';
@@ -321,7 +321,7 @@ const EventDetailsPage = ({ eventId, embedded = false }) => {
                                 <circle cx="12" cy="12" r="10" />
                                 <polyline points="12 6 12 12 16 14" />
                               </svg>
-                              <span>{sumParticipationHours(item, selectedDates, hasDateFilter) || 0} ч.</span>
+                              <span>{formatHoursMinutes(sumParticipationHours(item, selectedDates, hasDateFilter), '0 \u0447.')}</span>
                             </div>
                             <div className="participant-item__phone">{phone}</div>
                           </div>
