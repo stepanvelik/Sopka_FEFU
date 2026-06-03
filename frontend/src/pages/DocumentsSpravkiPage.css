@@ -320,6 +320,16 @@
   font-weight: 400;
 }
 
+.documents-spravki-page__inline-form input.documents-spravki-page__missing-input {
+  border-color: #d9867f;
+  background: #fff5f4;
+}
+
+.documents-spravki-page__inline-form input.documents-spravki-page__missing-input:focus {
+  border-color: var(--app-color-error-text);
+  box-shadow: 0 0 0 3px rgba(140, 47, 40, 0.12);
+}
+
 .documents-spravki-page__inline-form button {
   padding: 0 12px;
   white-space: nowrap;

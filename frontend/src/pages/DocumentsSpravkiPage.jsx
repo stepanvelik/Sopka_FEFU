@@ -232,6 +232,12 @@ function ParticipantDocumentsRow({
     onChangeDraft(student.student_id, name, nextValue);
   }
 
+  function getFieldClassName(name, sourceValue) {
+    return !hasValue(sourceValue) && !hasValue(draft[name])
+      ? 'documents-spravki-page__missing-input'
+      : '';
+  }
+
   return (
     <>
       <tr className={hasMissingFields ? 'documents-spravki-page__row--incomplete' : 'documents-spravki-page__row--complete'}>
@@ -274,27 +280,27 @@ function ParticipantDocumentsRow({
                 <div className="documents-spravki-page__inline-form">
                   <label>
                     <span>Серия</span>
-                    <input name="passport_series" value={draft.passport_series} onChange={handleChange} placeholder="0000" maxLength={4} {...digitInputProps} />
+                    <input className={getFieldClassName('passport_series', student.passport_series)} name="passport_series" value={draft.passport_series} onChange={handleChange} placeholder="0000" maxLength={4} {...digitInputProps} />
                   </label>
                   <label>
                     <span>Номер</span>
-                    <input name="passport_number" value={draft.passport_number} onChange={handleChange} placeholder="000000" maxLength={6} {...digitInputProps} />
+                    <input className={getFieldClassName('passport_number', student.passport_number)} name="passport_number" value={draft.passport_number} onChange={handleChange} placeholder="000000" maxLength={6} {...digitInputProps} />
                   </label>
                   <label>
                     <span>Кем выдан</span>
-                    <input name="passport_issued_by" value={draft.passport_issued_by} onChange={handleChange} placeholder="Кем выдан паспорт" />
+                    <input className={getFieldClassName('passport_issued_by', student.passport_issued_by)} name="passport_issued_by" value={draft.passport_issued_by} onChange={handleChange} placeholder="Кем выдан паспорт" />
                   </label>
                   <label>
                     <span>Дата выдачи</span>
-                    <input name="passport_issue_date" type="date" value={draft.passport_issue_date} onChange={handleChange} />
+                    <input className={getFieldClassName('passport_issue_date', student.passport_issue_date)} name="passport_issue_date" type="date" value={draft.passport_issue_date} onChange={handleChange} />
                   </label>
                   <label>
                     <span>Код подразделения</span>
-                    <input name="passport_department_code" value={draft.passport_department_code} onChange={handleChange} placeholder="000-000" maxLength={7} {...digitInputProps} />
+                    <input className={getFieldClassName('passport_department_code', student.passport_department_code)} name="passport_department_code" value={draft.passport_department_code} onChange={handleChange} placeholder="000-000" maxLength={7} {...digitInputProps} />
                   </label>
                   <label>
                     <span>Адрес регистрации</span>
-                    <input name="registration_address" value={draft.registration_address} onChange={handleChange} placeholder="Адрес регистрации" />
+                    <input className={getFieldClassName('registration_address', student.registration_address)} name="registration_address" value={draft.registration_address} onChange={handleChange} placeholder="Адрес регистрации" />
                   </label>
                 </div>
               </section>
@@ -306,6 +312,7 @@ function ParticipantDocumentsRow({
                     <span>СНИЛС</span>
                     <input
                       name="snils"
+                      className={getFieldClassName('snils', student.snils)}
                       value={draft.snils}
                       onChange={handleChange}
                       placeholder="000-000-000 00"
@@ -317,6 +324,7 @@ function ParticipantDocumentsRow({
                     <span>ИНН</span>
                     <input
                       name="inn"
+                      className={getFieldClassName('inn', student.inn)}
                       value={draft.inn}
                       onChange={handleChange}
                       placeholder="000000000000"
@@ -332,16 +340,17 @@ function ParticipantDocumentsRow({
                 <div className="documents-spravki-page__inline-form">
                   <label>
                     <span>Банк</span>
-                    <input name="bank_name" value={draft.bank_name} onChange={handleChange} placeholder="Наименование банка" />
+                    <input className={getFieldClassName('bank_name', bankDetails?.bank_name)} name="bank_name" value={draft.bank_name} onChange={handleChange} placeholder="Наименование банка" />
                   </label>
                   <label>
                     <span>БИК</span>
-                    <input name="bik" value={draft.bik} onChange={handleChange} placeholder="000000000" maxLength={9} {...digitInputProps} />
+                    <input className={getFieldClassName('bik', bankDetails?.bik)} name="bik" value={draft.bik} onChange={handleChange} placeholder="000000000" maxLength={9} {...digitInputProps} />
                   </label>
                   <label>
                     <span>Корр. счет</span>
                     <input
                       name="correspondent_account"
+                      className={getFieldClassName('correspondent_account', bankDetails?.correspondent_account)}
                       value={draft.correspondent_account}
                       onChange={handleChange}
                       placeholder="00000000000000000000"
@@ -353,6 +362,7 @@ function ParticipantDocumentsRow({
                     <span>Счет</span>
                     <input
                       name="account_number"
+                      className={getFieldClassName('account_number', bankDetails?.account_number)}
                       value={draft.account_number}
                       onChange={handleChange}
                       placeholder="00000000000000000000"
