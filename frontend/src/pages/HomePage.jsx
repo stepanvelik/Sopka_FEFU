@@ -30,6 +30,7 @@ const navigationGroups = [
     title: 'Отчёты и документы',
     links: [
       { label: 'Участие студента', href: '#student-events' },
+      { label: 'Справки', href: '#student-events?document=spravki' },
       { label: 'Сводная таблица', href: '#participants-summary' },
       { label: 'Трудоустройство', href: '#documents-spravki' },
     ],

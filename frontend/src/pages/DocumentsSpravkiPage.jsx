@@ -18,6 +18,9 @@ const digitInputProps = {
 };
 
 const fieldFormatters = {
+  passport_series: (value) => getDigits(value).slice(0, 4),
+  passport_number: (value) => getDigits(value).slice(0, 6),
+  passport_department_code: (value) => formatDepartmentCode(value),
   snils: (value) => formatSnils(value),
   inn: (value) => getDigits(value).slice(0, 12),
   bik: (value) => getDigits(value).slice(0, 9),
@@ -45,6 +48,13 @@ function formatSnils(value) {
   const thirdPart = digits.slice(6, 9);
   const controlPart = digits.slice(9, 11);
   return [firstPart, secondPart, thirdPart].filter(Boolean).join('-') + (controlPart ? ` ${controlPart}` : '');
+}
+
+function formatDepartmentCode(value) {
+  const digits = getDigits(value).slice(0, 6);
+  const firstPart = digits.slice(0, 3);
+  const secondPart = digits.slice(3, 6);
+  return secondPart ? `${firstPart}-${secondPart}` : firstPart;
 }
 
 function normalizeSearchValue(value) {
@@ -85,11 +95,22 @@ function hasCompleteBankDetails(bankDetails) {
   );
 }
 
+function hasCompletePassportData(student) {
+  return Boolean(
+    hasValue(student?.passport_series)
+      && hasValue(student?.passport_number)
+      && hasValue(student?.passport_issued_by)
+      && hasValue(student?.passport_issue_date)
+      && hasValue(student?.passport_department_code)
+      && hasValue(student?.registration_address),
+  );
+}
+
 function getMissingFields(student, bankDetails) {
   const missing = [];
-  if (!hasValue(student.snils)) missing.push('СНИЛС');
-  if (!hasValue(student.inn)) missing.push('ИНН');
-  if (!hasCompleteBankDetails(bankDetails)) missing.push('Банк. реквизиты');
+  if (!hasCompletePassportData(student)) missing.push('Паспортные данные');
+  if (!hasValue(student.snils) || !hasValue(student.inn)) missing.push('ИНН / СНИЛС');
+  if (!hasCompleteBankDetails(bankDetails)) missing.push('Банковские реквизиты');
   return missing;
 }
 
@@ -108,6 +129,12 @@ function studentMatchesRegistrationDate(student, dateFrom, dateTo) {
 
 function createDraft(student, bankDetails) {
   return {
+    passport_series: student.passport_series || '',
+    passport_number: student.passport_number || '',
+    passport_issued_by: student.passport_issued_by || '',
+    passport_issue_date: formatDate(student.passport_issue_date),
+    passport_department_code: student.passport_department_code || '',
+    registration_address: student.registration_address || '',
     snils: student.snils || '',
     inn: student.inn || '',
     bank_name: bankDetails?.bank_name || '',
@@ -135,10 +162,28 @@ async function loadAllActiveStudents() {
 
 function getValidationMessages(draft, options = {}) {
   const {
+    validatePassport = true,
     validateInn = true,
     validateBank = true,
   } = options;
   const messages = [];
+  if (validatePassport) {
+    if (!hasValue(draft.passport_series)) messages.push('Укажите серию паспорта.');
+    if (!hasValue(draft.passport_number)) messages.push('Укажите номер паспорта.');
+    if (!hasValue(draft.passport_issued_by)) messages.push('Укажите кем выдан паспорт.');
+    if (!hasValue(draft.passport_issue_date)) messages.push('Укажите дату выдачи паспорта.');
+    if (!hasValue(draft.passport_department_code)) messages.push('Укажите код подразделения.');
+    if (!hasValue(draft.registration_address)) messages.push('Укажите адрес регистрации.');
+  }
+  if (validatePassport && hasValue(draft.passport_series) && !/^\d{4}$/.test(draft.passport_series)) {
+    messages.push('Серия паспорта должна состоять из 4 цифр.');
+  }
+  if (validatePassport && hasValue(draft.passport_number) && !/^\d{6}$/.test(draft.passport_number)) {
+    messages.push('Номер паспорта должен состоять из 6 цифр.');
+  }
+  if (validatePassport && hasValue(draft.passport_department_code) && !/^\d{3}-\d{3}$/.test(draft.passport_department_code)) {
+    messages.push('Код подразделения должен быть в формате 000-000.');
+  }
   if (validateInn && hasValue(draft.inn) && !/^\d{12}$/.test(draft.inn)) {
     messages.push('ИНН должен состоять из 12 цифр.');
   }
@@ -173,7 +218,9 @@ function ParticipantDocumentsRow({
 }) {
   const fullName = getStudentFullName(student) || `ID ${student.student_id}`;
   const missingFields = getMissingFields(student, bankDetails);
+  const hasMissingFields = missingFields.length > 0;
   const validationMessages = getValidationMessages(draft, {
+    validatePassport: !hasCompletePassportData(student),
     validateInn: !hasValue(student.inn),
     validateBank: !hasCompleteBankDetails(bankDetails),
   });
@@ -186,109 +233,149 @@ function ParticipantDocumentsRow({
   }
 
   return (
-    <tr className={missingFields.length ? 'documents-spravki-page__row--incomplete' : 'documents-spravki-page__row--complete'}>
-      <td className="documents-spravki-page__select-cell">
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={() => onToggle(student.student_id)}
-          aria-label={`Выбрать ${fullName}`}
-        />
-      </td>
-      <td>
-        <a className="documents-spravki-page__participant-link" href={`#edit-participant?id=${student.student_id}`}>
-          {fullName}
-        </a>
-        <span className="documents-spravki-page__registered">
-          Регистрация: {formatDate(student.created_at) || 'не указана'}
-        </span>
-      </td>
-      <td>{formatPhone(student.phone) || 'Не указан'}</td>
-      <td>
-        {missingFields.length ? (
-          <div className="documents-spravki-page__missing-list">
-            {missingFields.map((field) => (
-              <span key={field}>• {field}</span>
-            ))}
-          </div>
-        ) : null}
-      </td>
-      <td>
-        <div className="documents-spravki-page__inline-form">
-          {!hasValue(student.snils) ? (
-            <label>
-              <span>СНИЛС</span>
-              <input
-                name="snils"
-                value={draft.snils}
-                onChange={handleChange}
-                placeholder="000-000-000 00"
-                maxLength={14}
-                {...digitInputProps}
-              />
-            </label>
-          ) : null}
+    <>
+      <tr className={hasMissingFields ? 'documents-spravki-page__row--incomplete' : 'documents-spravki-page__row--complete'}>
+        <td className="documents-spravki-page__select-cell">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onToggle(student.student_id)}
+            aria-label={`Выбрать ${fullName}`}
+          />
+        </td>
+        <td>
+          <a className="documents-spravki-page__participant-link" href={`#edit-participant?id=${student.student_id}`}>
+            {fullName}
+          </a>
+          <span className="documents-spravki-page__registered">
+            Регистрация: {formatDate(student.created_at) || 'не указана'}
+          </span>
+        </td>
+        <td>{formatPhone(student.phone) || 'Не указан'}</td>
+        <td>
+          {hasMissingFields ? (
+            <div className="documents-spravki-page__missing-list">
+              {missingFields.map((field) => (
+                <span key={field}>• {field}</span>
+              ))}
+            </div>
+          ) : (
+            <span className="documents-spravki-page__dash">—</span>
+          )}
+        </td>
+      </tr>
+      {hasMissingFields ? (
+        <tr className="documents-spravki-page__details-row">
+          <td />
+          <td colSpan="3">
+            <div className="documents-spravki-page__details-grid">
+              <section className="documents-spravki-page__details-box">
+                <h2>Паспортные данные</h2>
+                <div className="documents-spravki-page__inline-form">
+                  <label>
+                    <span>Серия</span>
+                    <input name="passport_series" value={draft.passport_series} onChange={handleChange} placeholder="0000" maxLength={4} {...digitInputProps} />
+                  </label>
+                  <label>
+                    <span>Номер</span>
+                    <input name="passport_number" value={draft.passport_number} onChange={handleChange} placeholder="000000" maxLength={6} {...digitInputProps} />
+                  </label>
+                  <label>
+                    <span>Кем выдан</span>
+                    <input name="passport_issued_by" value={draft.passport_issued_by} onChange={handleChange} placeholder="Кем выдан паспорт" />
+                  </label>
+                  <label>
+                    <span>Дата выдачи</span>
+                    <input name="passport_issue_date" type="date" value={draft.passport_issue_date} onChange={handleChange} />
+                  </label>
+                  <label>
+                    <span>Код подразделения</span>
+                    <input name="passport_department_code" value={draft.passport_department_code} onChange={handleChange} placeholder="000-000" maxLength={7} {...digitInputProps} />
+                  </label>
+                  <label>
+                    <span>Адрес регистрации</span>
+                    <input name="registration_address" value={draft.registration_address} onChange={handleChange} placeholder="Адрес регистрации" />
+                  </label>
+                </div>
+              </section>
 
-          {!hasValue(student.inn) ? (
-            <label>
-              <span>ИНН</span>
-              <input
-                name="inn"
-                value={draft.inn}
-                onChange={handleChange}
-                placeholder="000000000000"
-                maxLength={12}
-                {...digitInputProps}
-              />
-            </label>
-          ) : null}
+              <section className="documents-spravki-page__details-box">
+                <h2>ИНН / СНИЛС</h2>
+                <div className="documents-spravki-page__inline-form">
+                  <label>
+                    <span>СНИЛС</span>
+                    <input
+                      name="snils"
+                      value={draft.snils}
+                      onChange={handleChange}
+                      placeholder="000-000-000 00"
+                      maxLength={14}
+                      {...digitInputProps}
+                    />
+                  </label>
+                  <label>
+                    <span>ИНН</span>
+                    <input
+                      name="inn"
+                      value={draft.inn}
+                      onChange={handleChange}
+                      placeholder="000000000000"
+                      maxLength={12}
+                      {...digitInputProps}
+                    />
+                  </label>
+                </div>
+              </section>
 
-          {!hasCompleteBankDetails(bankDetails) ? (
-            <>
-              <label>
-                <span>Банк</span>
-                <input name="bank_name" value={draft.bank_name} onChange={handleChange} placeholder="Наименование банка" />
-              </label>
-              <label>
-                <span>БИК</span>
-                <input name="bik" value={draft.bik} onChange={handleChange} placeholder="000000000" maxLength={9} {...digitInputProps} />
-              </label>
-              <label>
-                <span>Корр. счет</span>
-                <input
-                  name="correspondent_account"
-                  value={draft.correspondent_account}
-                  onChange={handleChange}
-                  placeholder="00000000000000000000"
-                  maxLength={20}
-                  {...digitInputProps}
-                />
-              </label>
-              <label>
-                <span>Счет</span>
-                <input
-                  name="account_number"
-                  value={draft.account_number}
-                  onChange={handleChange}
-                  placeholder="00000000000000000000"
-                  maxLength={20}
-                  {...digitInputProps}
-                />
-              </label>
-            </>
-          ) : null}
+              <section className="documents-spravki-page__details-box">
+                <h2>Банковские реквизиты</h2>
+                <div className="documents-spravki-page__inline-form">
+                  <label>
+                    <span>Банк</span>
+                    <input name="bank_name" value={draft.bank_name} onChange={handleChange} placeholder="Наименование банка" />
+                  </label>
+                  <label>
+                    <span>БИК</span>
+                    <input name="bik" value={draft.bik} onChange={handleChange} placeholder="000000000" maxLength={9} {...digitInputProps} />
+                  </label>
+                  <label>
+                    <span>Корр. счет</span>
+                    <input
+                      name="correspondent_account"
+                      value={draft.correspondent_account}
+                      onChange={handleChange}
+                      placeholder="00000000000000000000"
+                      maxLength={20}
+                      {...digitInputProps}
+                    />
+                  </label>
+                  <label>
+                    <span>Счет</span>
+                    <input
+                      name="account_number"
+                      value={draft.account_number}
+                      onChange={handleChange}
+                      placeholder="00000000000000000000"
+                      maxLength={20}
+                      {...digitInputProps}
+                    />
+                  </label>
+                </div>
+              </section>
+            </div>
 
-          {missingFields.length ? (
-            <button type="button" disabled={!canSave} onClick={() => onSave(student.student_id)}>
-              {isSaving ? 'Сохранение...' : 'Сохранить'}
-            </button>
-          ) : null}
-        </div>
-        {validationMessages.length ? (
-          <p className="documents-spravki-page__row-error">{validationMessages[0]}</p>
-        ) : null}
-      </td>
-    </tr>
+            <div className="documents-spravki-page__details-actions">
+              {validationMessages.length ? (
+                <p className="documents-spravki-page__row-error">{validationMessages[0]}</p>
+              ) : null}
+              <button type="button" disabled={!canSave} onClick={() => onSave(student.student_id)}>
+                {isSaving ? 'Сохранение...' : 'Сохранить'}
+              </button>
+            </div>
+          </td>
+        </tr>
+      ) : null}
+    </>
   );
 }
 
@@ -408,6 +495,7 @@ export function DocumentsSpravkiPage() {
     const bankDetails = bankDetailsByStudentId[studentId] || null;
     const draft = draftsByStudentId[studentId] || {};
     const validationMessages = getValidationMessages(draft, {
+      validatePassport: !hasCompletePassportData(student),
       validateInn: !hasValue(student?.inn),
       validateBank: !hasCompleteBankDetails(bankDetails),
     });
@@ -422,6 +510,14 @@ export function DocumentsSpravkiPage() {
 
     try {
       const studentPayload = {};
+      if (!hasCompletePassportData(student)) {
+        studentPayload.passport_series = sanitizeOptional(draft.passport_series);
+        studentPayload.passport_number = sanitizeOptional(draft.passport_number);
+        studentPayload.passport_issued_by = sanitizeOptional(draft.passport_issued_by);
+        studentPayload.passport_issue_date = sanitizeOptional(draft.passport_issue_date);
+        studentPayload.passport_department_code = sanitizeOptional(draft.passport_department_code);
+        studentPayload.registration_address = sanitizeOptional(draft.registration_address);
+      }
       if (!hasValue(student.snils)) studentPayload.snils = sanitizeOptional(draft.snils);
       if (!hasValue(student.inn)) studentPayload.inn = sanitizeOptional(draft.inn);
 
@@ -628,17 +724,16 @@ export function DocumentsSpravkiPage() {
               <th>ФИО</th>
               <th>Телефон</th>
               <th>Незаполненная информация</th>
-              <th>Заполнить данные</th>
             </tr>
           </thead>
           <tbody>
             {status.type === 'loading' && students.length === 0 ? (
               <tr>
-                <td colSpan="5" className="documents-spravki-page__empty">Загрузка участников...</td>
+                <td colSpan="4" className="documents-spravki-page__empty">Загрузка участников...</td>
               </tr>
             ) : filteredStudents.length === 0 ? (
               <tr>
-                <td colSpan="5" className="documents-spravki-page__empty">Участники по выбранным условиям не найдены.</td>
+                <td colSpan="4" className="documents-spravki-page__empty">Участники по выбранным условиям не найдены.</td>
               </tr>
             ) : (
               filteredStudents.map((student) => (

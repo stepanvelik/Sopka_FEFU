@@ -42,6 +42,7 @@ const navGroups = [
     routes: ['documents-spravki'],
     items: [
       { label: 'Трудоустройство', href: '#documents-spravki', route: 'documents-spravki' },
+      { label: 'Справки', href: '#student-events', route: 'student-events' },
     ],
   },
 ];
