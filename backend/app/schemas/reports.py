@@ -25,7 +25,7 @@ class ParticipantSummaryCell(BaseModel):
 class ParticipantSummaryRow(BaseModel):
     student_id: int
     full_name: str
-    phone: int | None
+    phone: str | None
     total_hours: Decimal
     events: list[ParticipantSummaryCell]
 
@@ -50,13 +50,13 @@ class StudentEventRow(BaseModel):
 class StudentSearchMatch(BaseModel):
     student_id: int
     full_name: str
-    phone: int | None = None
+    phone: str | None = None
 
 
 class StudentEventsReport(BaseModel):
     student_id: int | None = None
     full_name: str = ""
-    phone: int | None = None
+    phone: str | None = None
     total_hours: Decimal = Decimal("0")
     total_events: int = 0
     events: list[StudentEventRow] = []

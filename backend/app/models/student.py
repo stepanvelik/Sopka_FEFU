@@ -23,7 +23,7 @@ class Student(Base):
     study_group: Mapped[str] = mapped_column(String(50))
     institute: Mapped[str] = mapped_column(String(255))
 
-    phone: Mapped[int | None] = mapped_column(BigInteger)
+    phone: Mapped[str | None] = mapped_column(String(30))
     email: Mapped[str | None] = mapped_column(String(255))
     corporate_email: Mapped[str | None] = mapped_column(String(255))
 

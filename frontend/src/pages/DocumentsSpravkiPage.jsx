@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 import {
   createBankDetails,
-  downloadEmploymentBankDetailsExcel,
   downloadEmploymentDocumentsArchive,
   listBankDetails,
   listStudents,
@@ -29,11 +28,18 @@ const fieldFormatters = {
 };
 
 const archiveOptions = [
-  { id: 'all', label: 'Все файлы' },
-  { id: 'file_1', label: 'Только файл 1' },
-  { id: 'file_2', label: 'Только файл 2' },
-  { id: 'file_3', label: 'Только файл 3' },
+  { id: 'all', label: 'Все документы' },
+  { id: 'file_1', label: 'Заявление на вступление' },
+  { id: 'file_2', label: 'Согласие ОПД' },
+  { id: 'file_3', label: 'Реквизиты' },
 ];
+
+const NOT_IMPLEMENTED_MESSAGES = {
+  excel: 'Формирование Excel файла с банковскими реквизитами пока не реализовано.',
+  all: 'Формирование всех документов пока не реализовано.',
+  file_1: 'Формирование документа «Заявление на вступление» пока не реализовано.',
+  file_2: 'Формирование документа «Согласие ОПД» пока не реализовано.',
+};
 
 const STUDENTS_PAGE_SIZE = 200;
 
@@ -398,7 +404,7 @@ export function DocumentsSpravkiPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [selectedOnly, setSelectedOnly] = useState(false);
-  const [archiveOption, setArchiveOption] = useState('all');
+  const [archiveOption, setArchiveOption] = useState('file_3');
   const [openArchiveMenu, setOpenArchiveMenu] = useState(false);
   const [savingStudentId, setSavingStudentId] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -571,32 +577,21 @@ export function DocumentsSpravkiPage() {
     return selectedIds;
   }
 
-  async function handleDownloadBankExcel() {
-    if (selectedIds.length === 0) {
-      setStatus({ type: 'error', message: 'Выберите участников для формирования файла.' });
-      return;
-    }
-
-    setIsDownloading(true);
-    setStatus({ type: 'loading', message: 'Формирование Excel файла...' });
-
-    try {
-      const { blob, filename } = await downloadEmploymentBankDetailsExcel({ studentIds: getExportStudentIds() });
-      triggerDownload(blob, filename);
-      setStatus({ type: 'idle', message: 'Excel файл сформирован и загружен.' });
-    } catch (error) {
-      setStatus({
-        type: 'error',
-        message: error instanceof Error ? error.message : 'Не удалось сформировать Excel файл.',
-      });
-    } finally {
-      setIsDownloading(false);
-    }
+  function handleDownloadBankExcel() {
+    setStatus({ type: 'error', message: NOT_IMPLEMENTED_MESSAGES.excel });
   }
 
   async function handleDownloadArchive(optionId = archiveOption) {
     if (selectedIds.length === 0) {
       setStatus({ type: 'error', message: 'Выберите участников для формирования архива.' });
+      return;
+    }
+
+    const notImplementedMessage = NOT_IMPLEMENTED_MESSAGES[optionId];
+    if (notImplementedMessage) {
+      setOpenArchiveMenu(false);
+      setArchiveOption(optionId);
+      setStatus({ type: 'error', message: notImplementedMessage });
       return;
     }
 

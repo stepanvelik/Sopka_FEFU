@@ -29,7 +29,10 @@ from app.schemas.reports import (
     StudentEventsReport,
     StudentSearchMatch,
 )
+from app.services.generate_rekvizity import generate_rekvizity, make_filename as make_rekvizity_filename
+from app.services.generate_rekvizity import resolve_template_path as resolve_rekvizity_template_path
 from app.services.generate_spravka import generate_spravka, make_filename, resolve_template_path
+from app.services.rekvizity_data import build_rekvizity_payload
 from app.services.spravka_data import build_spravka_payload
 from app.services.student_lookup import find_student_by_phone, normalize_phone
 
@@ -117,7 +120,7 @@ async def _resolve_student_for_search(
     query = search.strip()
     if _is_phone_search(query):
         digits = "".join(char for char in query if char.isdigit())
-        student = await find_student_by_phone(session, normalize_phone(int(digits)))
+        student = await find_student_by_phone(session, digits)
         return student, []
 
     students = await _find_students_by_name(session, query)
@@ -535,6 +538,76 @@ async def download_event_spravki_archive(
         raise HTTPException(status_code=500, detail="Не удалось сформировать архив справок.") from exc
 
     archive_name = f"Справки_{event.event_name[:80]}.zip".replace("/", "_").replace("\\", "_")
+    return FileResponse(
+        path=zip_path,
+        media_type="application/zip",
+        filename=archive_name,
+        background=BackgroundTask(lambda: shutil.rmtree(tmp_dir, ignore_errors=True)),
+    )
+
+
+EMPLOYMENT_DOC_LABELS = {
+    "file_1": "Заявление на вступление",
+    "file_2": "Согласие ОПД",
+    "file_3": "Реквизиты",
+}
+
+
+def _employment_documents_to_generate(file: str | None) -> set[str]:
+    normalized = (file or "").strip()
+    if not normalized:
+        raise HTTPException(status_code=501, detail="Формирование всех документов пока не реализовано.")
+    if normalized not in EMPLOYMENT_DOC_LABELS:
+        raise HTTPException(status_code=422, detail="Некорректный тип документа.")
+    return {normalized}
+
+
+@router.get("/employment/documents.zip")
+async def download_employment_documents_archive(
+    session: AsyncSession = Depends(get_session),
+    student_ids: list[int] = Query(..., min_length=1),
+    file: str | None = Query(None),
+) -> FileResponse:
+    unique_ids = list(dict.fromkeys(student_ids))
+    documents = _employment_documents_to_generate(file)
+
+    unsupported = sorted(documents - {"file_3"})
+    if unsupported:
+        labels = ", ".join(EMPLOYMENT_DOC_LABELS[item] for item in unsupported)
+        raise HTTPException(
+            status_code=501,
+            detail=f"Формирование документов «{labels}» пока не реализовано.",
+        )
+
+    try:
+        template_path = resolve_rekvizity_template_path()
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix="employment_docs_"))
+    zip_path = tmp_dir / "employment_documents.zip"
+
+    try:
+        with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            used_names: set[str] = set()
+            for student_id in unique_ids:
+                payload = await build_rekvizity_payload(session, student_id=student_id)
+                filename = make_rekvizity_filename(payload["fio"])
+                if filename in used_names:
+                    filename = f"{student_id}_{filename}"
+                used_names.add(filename)
+
+                docx_path = tmp_dir / filename
+                generate_rekvizity(payload, template_path, docx_path)
+                archive.write(docx_path, arcname=filename)
+    except HTTPException:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        raise
+    except Exception as exc:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        raise HTTPException(status_code=500, detail="Не удалось сформировать архив документов.") from exc
+
+    archive_name = "Документы_на_трудоустройство.zip"
     return FileResponse(
         path=zip_path,
         media_type="application/zip",

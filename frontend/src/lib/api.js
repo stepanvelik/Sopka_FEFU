@@ -391,16 +391,6 @@ async function downloadFile(path, fallbackFilename) {
   return { blob, filename };
 }
 
-export async function downloadEmploymentBankDetailsExcel({ studentIds = [] } = {}) {
-  const params = new URLSearchParams();
-  studentIds.forEach((studentId) => {
-    params.append('student_ids', String(studentId));
-  });
-
-  const suffix = params.toString() ? `?${params.toString()}` : '';
-  return downloadFile(`/reports/employment/bank-details.xlsx${suffix}`, 'Банковские_реквизиты.xlsx');
-}
-
 export async function downloadEmploymentDocumentsArchive({ studentIds = [], file = '' } = {}) {
   const params = new URLSearchParams();
   studentIds.forEach((studentId) => {

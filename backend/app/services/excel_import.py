@@ -297,9 +297,15 @@ class ExcelImportService:
         digits = "".join(ch for ch in s if ch.isdigit())
         return digits or None
 
-    def _normalize_phone(self, value: Any) -> int | None:
+    def _normalize_phone(self, value: Any) -> str | None:
         digits = self._normalize_id_field(value)
-        return int(digits) if digits else None
+        if not digits:
+            return None
+        if len(digits) == 10:
+            digits = "7" + digits
+        if len(digits) == 11 and digits.startswith("8"):
+            digits = "7" + digits[1:]
+        return digits
 
     def _prepare_student(self, row: pd.Series) -> dict[str, Any]:
         student: dict[str, Any] = {}
