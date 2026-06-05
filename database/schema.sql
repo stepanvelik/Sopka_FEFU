@@ -31,7 +31,7 @@ create table if not exists students (
     study_group varchar(50) not null,
     institute varchar(255) not null,
 
-    phone bigint not null,
+    phone varchar(30) not null,
     email varchar(255), -- может использоваться как корпоративная почта
     corporate_email varchar(255), -- если нужно отдельно хранить корпоративную почту
 
@@ -56,7 +56,7 @@ create table if not exists students (
     constraint uq_students_passport unique (passport_series, passport_number),
     constraint uq_students_snils unique (snils),
     constraint uq_students_inn unique (inn),
-    constraint ck_students_phone check (phone > 0),
+    constraint ck_students_phone check (phone ~ '[0-9]'),
     constraint ck_students_email check (email is null or position('@' in email) > 1),
     constraint ck_students_corporate_email check (corporate_email is null or position('@' in corporate_email) > 1),
     constraint ck_students_birth_date check (birth_date <= current_date),

@@ -36,8 +36,6 @@ const archiveOptions = [
 
 const NOT_IMPLEMENTED_MESSAGES = {
   excel: 'Формирование Excel файла с банковскими реквизитами пока не реализовано.',
-  all: 'Формирование всех документов пока не реализовано.',
-  file_1: 'Формирование документа «Заявление на вступление» пока не реализовано.',
   file_2: 'Формирование документа «Согласие ОПД» пока не реализовано.',
 };
 
@@ -404,7 +402,7 @@ export function DocumentsSpravkiPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [selectedOnly, setSelectedOnly] = useState(false);
-  const [archiveOption, setArchiveOption] = useState('file_3');
+  const [archiveOption, setArchiveOption] = useState('all');
   const [openArchiveMenu, setOpenArchiveMenu] = useState(false);
   const [savingStudentId, setSavingStudentId] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);

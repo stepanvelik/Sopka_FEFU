@@ -31,8 +31,14 @@ from app.schemas.reports import (
 )
 from app.services.generate_rekvizity import generate_rekvizity, make_filename as make_rekvizity_filename
 from app.services.generate_rekvizity import resolve_template_path as resolve_rekvizity_template_path
+from app.services.generate_rso_application import (
+    generate_rso_application,
+    make_rso_filename,
+    resolve_rso_template_path,
+)
 from app.services.generate_spravka import generate_spravka, make_filename, resolve_template_path
 from app.services.rekvizity_data import build_rekvizity_payload
+from app.services.rso_application_data import build_rso_application_payload
 from app.services.spravka_data import build_spravka_payload
 from app.services.student_lookup import find_student_by_phone, normalize_phone
 
@@ -551,12 +557,13 @@ EMPLOYMENT_DOC_LABELS = {
     "file_2": "Согласие ОПД",
     "file_3": "Реквизиты",
 }
+IMPLEMENTED_EMPLOYMENT_DOCS = {"file_1", "file_3"}
 
 
 def _employment_documents_to_generate(file: str | None) -> set[str]:
     normalized = (file or "").strip()
     if not normalized:
-        raise HTTPException(status_code=501, detail="Формирование всех документов пока не реализовано.")
+        return set(IMPLEMENTED_EMPLOYMENT_DOCS)
     if normalized not in EMPLOYMENT_DOC_LABELS:
         raise HTTPException(status_code=422, detail="Некорректный тип документа.")
     return {normalized}
@@ -571,7 +578,7 @@ async def download_employment_documents_archive(
     unique_ids = list(dict.fromkeys(student_ids))
     documents = _employment_documents_to_generate(file)
 
-    unsupported = sorted(documents - {"file_3"})
+    unsupported = sorted(documents - IMPLEMENTED_EMPLOYMENT_DOCS)
     if unsupported:
         labels = ", ".join(EMPLOYMENT_DOC_LABELS[item] for item in unsupported)
         raise HTTPException(
@@ -579,8 +586,12 @@ async def download_employment_documents_archive(
             detail=f"Формирование документов «{labels}» пока не реализовано.",
         )
 
+    templates: dict[str, Path] = {}
     try:
-        template_path = resolve_rekvizity_template_path()
+        if "file_1" in documents:
+            templates["file_1"] = resolve_rso_template_path()
+        if "file_3" in documents:
+            templates["file_3"] = resolve_rekvizity_template_path()
     except FileNotFoundError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
@@ -591,15 +602,27 @@ async def download_employment_documents_archive(
         with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
             used_names: set[str] = set()
             for student_id in unique_ids:
-                payload = await build_rekvizity_payload(session, student_id=student_id)
-                filename = make_rekvizity_filename(payload["fio"])
-                if filename in used_names:
-                    filename = f"{student_id}_{filename}"
-                used_names.add(filename)
+                if "file_1" in documents:
+                    rso_payload = await build_rso_application_payload(session, student_id=student_id)
+                    filename = make_rso_filename(rso_payload["full_name"])
+                    if filename in used_names:
+                        filename = f"{student_id}_{filename}"
+                    used_names.add(filename)
 
-                docx_path = tmp_dir / filename
-                generate_rekvizity(payload, template_path, docx_path)
-                archive.write(docx_path, arcname=filename)
+                    docx_path = tmp_dir / filename
+                    generate_rso_application(rso_payload, templates["file_1"], docx_path)
+                    archive.write(docx_path, arcname=filename)
+
+                if "file_3" in documents:
+                    rekvizity_payload = await build_rekvizity_payload(session, student_id=student_id)
+                    filename = make_rekvizity_filename(rekvizity_payload["fio"])
+                    if filename in used_names:
+                        filename = f"{student_id}_{filename}"
+                    used_names.add(filename)
+
+                    docx_path = tmp_dir / filename
+                    generate_rekvizity(rekvizity_payload, templates["file_3"], docx_path)
+                    archive.write(docx_path, arcname=filename)
     except HTTPException:
         shutil.rmtree(tmp_dir, ignore_errors=True)
         raise
