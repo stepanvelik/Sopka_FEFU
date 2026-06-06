@@ -29,17 +29,8 @@ const fieldFormatters = {
 };
 
 const archiveOptions = [
-  { id: 'all', label: 'Все документы' },
-  { id: 'file_1', label: 'Заявление на вступление' },
-  { id: 'file_2', label: 'Согласие ОПД' },
   { id: 'file_3', label: 'Реквизиты' },
 ];
-
-const NOT_IMPLEMENTED_MESSAGES = {
-  all: 'Формирование всех документов пока не реализовано.',
-  file_1: 'Формирование документа «Заявление на вступление» пока не реализовано.',
-  file_2: 'Формирование документа «Согласие ОПД» пока не реализовано.',
-};
 
 const STUDENTS_PAGE_SIZE = 200;
 
@@ -605,14 +596,6 @@ export function DocumentsSpravkiPage() {
   async function handleDownloadArchive(optionId = archiveOption) {
     if (selectedIds.length === 0) {
       setStatus({ type: 'error', message: 'Выберите участников для формирования архива.' });
-      return;
-    }
-
-    const notImplementedMessage = NOT_IMPLEMENTED_MESSAGES[optionId];
-    if (notImplementedMessage) {
-      setOpenArchiveMenu(false);
-      setArchiveOption(optionId);
-      setStatus({ type: 'error', message: notImplementedMessage });
       return;
     }
 
