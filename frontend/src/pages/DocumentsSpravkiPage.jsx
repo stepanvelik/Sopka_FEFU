@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 import {
   createBankDetails,
-  downloadEmploymentBankDetailsExcel,
   downloadEmploymentDocumentsArchive,
   listBankDetails,
   listStudents,
@@ -36,6 +35,7 @@ const archiveOptions = [
 ];
 
 const NOT_IMPLEMENTED_MESSAGES = {
+  excel: 'Формирование Excel файла с банковскими реквизитами пока не реализовано.',
   all: 'Формирование всех документов пока не реализовано.',
   file_1: 'Формирование документа «Заявление на вступление» пока не реализовано.',
   file_2: 'Формирование документа «Согласие ОПД» пока не реализовано.',
@@ -577,29 +577,8 @@ export function DocumentsSpravkiPage() {
     return selectedIds;
   }
 
-  async function handleDownloadBankExcel() {
-    if (selectedIds.length === 0) {
-      setStatus({ type: 'error', message: 'Выберите участников для формирования Excel файла.' });
-      return;
-    }
-
-    setIsDownloading(true);
-    setStatus({ type: 'loading', message: 'Формирование Excel файла с банковскими реквизитами...' });
-
-    try {
-      const { blob, filename } = await downloadEmploymentBankDetailsExcel({
-        studentIds: getExportStudentIds(),
-      });
-      triggerDownload(blob, filename);
-      setStatus({ type: 'idle', message: 'Excel файл с банковскими реквизитами сформирован и загружен.' });
-    } catch (error) {
-      setStatus({
-        type: 'error',
-        message: error instanceof Error ? error.message : 'Не удалось сформировать Excel файл с банковскими реквизитами.',
-      });
-    } finally {
-      setIsDownloading(false);
-    }
+  function handleDownloadBankExcel() {
+    setStatus({ type: 'error', message: NOT_IMPLEMENTED_MESSAGES.excel });
   }
 
   async function handleDownloadArchive(optionId = archiveOption) {
