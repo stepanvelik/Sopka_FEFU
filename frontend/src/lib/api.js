@@ -404,6 +404,16 @@ export async function downloadEmploymentDocumentsArchive({ studentIds = [], file
   return downloadFile(`/reports/employment/documents.zip${suffix}`, 'Документы_на_трудоустройство.zip');
 }
 
+export async function downloadEmploymentBankDetailsExcel({ studentIds = [] } = {}) {
+  const params = new URLSearchParams();
+  studentIds.forEach((studentId) => {
+    params.append('student_ids', String(studentId));
+  });
+
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return downloadFile(`/reports/employment/bank-details.xlsx${suffix}`, 'Заполнение_данных_банк_реквизиты.xlsx');
+}
+
 export { API_BASE_URL };
 
 

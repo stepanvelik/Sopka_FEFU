@@ -29,6 +29,11 @@ from app.schemas.reports import (
     StudentEventsReport,
     StudentSearchMatch,
 )
+from app.services.generate_bank_details_excel import (
+    build_bank_details_rows,
+    generate_bank_details_excel,
+    make_bank_details_excel_filename,
+)
 from app.services.generate_rekvizity import generate_rekvizity, make_filename as make_rekvizity_filename
 from app.services.generate_rekvizity import resolve_template_path as resolve_rekvizity_template_path
 from app.services.generate_spravka import generate_spravka, make_filename, resolve_template_path
@@ -613,4 +618,29 @@ async def download_employment_documents_archive(
         media_type="application/zip",
         filename=archive_name,
         background=BackgroundTask(lambda: shutil.rmtree(tmp_dir, ignore_errors=True)),
+    )
+
+
+@router.get("/employment/bank-details.xlsx")
+async def download_employment_bank_details_excel(
+    session: AsyncSession = Depends(get_session),
+    student_ids: list[int] = Query(..., min_length=1),
+) -> FileResponse:
+    rows = await build_bank_details_rows(session, student_ids)
+
+    fd, tmp_path = tempfile.mkstemp(suffix=".xlsx")
+    os.close(fd)
+    output_path = Path(tmp_path)
+
+    try:
+        generate_bank_details_excel(rows, output_path)
+    except Exception as exc:
+        output_path.unlink(missing_ok=True)
+        raise HTTPException(status_code=500, detail="Не удалось сформировать Excel файл с банковскими реквизитами.") from exc
+
+    return FileResponse(
+        path=output_path,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        filename=make_bank_details_excel_filename(),
+        background=BackgroundTask(lambda: output_path.unlink(missing_ok=True)),
     )
