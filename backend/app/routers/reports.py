@@ -34,6 +34,11 @@ from app.services.generate_bank_details_excel import (
     generate_bank_details_excel,
     make_bank_details_excel_filename,
 )
+from app.services.generate_opd_consent import (
+    generate_opd_consent,
+    make_opd_filename,
+    resolve_opd_template_path,
+)
 from app.services.generate_rekvizity import generate_rekvizity, make_filename as make_rekvizity_filename
 from app.services.generate_rekvizity import resolve_template_path as resolve_rekvizity_template_path
 from app.services.generate_rso_application import (
@@ -41,6 +46,7 @@ from app.services.generate_rso_application import (
     make_rso_filename,
     resolve_rso_template_path,
 )
+from app.services.opd_consent_data import build_opd_consent_payload
 from app.services.generate_spravka import generate_spravka, make_filename, resolve_template_path
 from app.services.rekvizity_data import build_rekvizity_payload
 from app.services.rso_application_data import build_rso_application_payload
@@ -562,7 +568,7 @@ EMPLOYMENT_DOC_LABELS = {
     "file_2": "Согласие ОПД",
     "file_3": "Реквизиты",
 }
-IMPLEMENTED_EMPLOYMENT_DOCS = {"file_1", "file_3"}
+IMPLEMENTED_EMPLOYMENT_DOCS = {"file_1", "file_2", "file_3"}
 
 
 def _employment_documents_to_generate(file: str | None) -> set[str]:
@@ -595,6 +601,8 @@ async def download_employment_documents_archive(
     try:
         if "file_1" in documents:
             templates["file_1"] = resolve_rso_template_path()
+        if "file_2" in documents:
+            templates["file_2"] = resolve_opd_template_path()
         if "file_3" in documents:
             templates["file_3"] = resolve_rekvizity_template_path()
     except FileNotFoundError as exc:
@@ -616,6 +624,17 @@ async def download_employment_documents_archive(
 
                     docx_path = tmp_dir / filename
                     generate_rso_application(rso_payload, templates["file_1"], docx_path)
+                    archive.write(docx_path, arcname=filename)
+
+                if "file_2" in documents:
+                    opd_payload = await build_opd_consent_payload(session, student_id=student_id)
+                    filename = make_opd_filename(opd_payload["fio"])
+                    if filename in used_names:
+                        filename = f"{student_id}_{filename}"
+                    used_names.add(filename)
+
+                    docx_path = tmp_dir / filename
+                    generate_opd_consent(opd_payload, templates["file_2"], docx_path)
                     archive.write(docx_path, arcname=filename)
 
                 if "file_3" in documents:
