@@ -9,6 +9,7 @@ import zipfile
 from pathlib import Path
 
 from app.services.generate_spravka import YELLOW_RUN_RE, _set_yellow_run_text, escape_xml
+from app.services.generate_rso_application import remove_yellow_highlighting
 
 DEFAULT_TEMPLATE = Path(__file__).resolve().parents[2] / "templates" / "rekvizity_template.docx"
 
@@ -24,7 +25,13 @@ def replace_yellow_runs_at_indices(xml: str, replacements: dict[int, str]) -> st
     return xml
 
 
-def generate_rekvizity(data: dict[str, str], template_path: str | Path, output_path: str | Path) -> Path:
+def generate_rekvizity(
+    data: dict[str, str],
+    template_path: str | Path,
+    output_path: str | Path,
+    *,
+    remove_yellow: bool = True,
+) -> Path:
     template_path = Path(template_path)
     output_path = Path(output_path)
     tmp_path = output_path.with_suffix(output_path.suffix + "._tmp_.docx")
@@ -75,6 +82,8 @@ def generate_rekvizity(data: dict[str, str], template_path: str | Path, output_p
             34: data["correspondent_account"],
         },
     )
+    if remove_yellow:
+        xml = remove_yellow_highlighting(xml)
 
     contents["word/document.xml"] = xml.encode("utf-8")
 

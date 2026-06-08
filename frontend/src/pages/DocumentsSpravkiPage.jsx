@@ -29,6 +29,8 @@ const fieldFormatters = {
 };
 
 const archiveOptions = [
+  { id: 'file_1', label: 'Заявление на вступление' },
+  { id: 'file_2', label: 'Согласие ОПД' },
   { id: 'file_3', label: 'Реквизиты' },
 ];
 
@@ -395,7 +397,6 @@ export function DocumentsSpravkiPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [selectedOnly, setSelectedOnly] = useState(false);
-  const [archiveOption, setArchiveOption] = useState('file_3');
   const [openArchiveMenu, setOpenArchiveMenu] = useState(false);
   const [savingStudentId, setSavingStudentId] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -593,14 +594,13 @@ export function DocumentsSpravkiPage() {
     }
   }
 
-  async function handleDownloadArchive(optionId = archiveOption) {
+  async function handleDownloadArchive(optionId = 'all') {
     if (selectedIds.length === 0) {
       setStatus({ type: 'error', message: 'Выберите участников для формирования архива.' });
       return;
     }
 
     setOpenArchiveMenu(false);
-    setArchiveOption(optionId);
     setIsDownloading(true);
     setStatus({ type: 'loading', message: 'Формирование архива с документами...' });
 
@@ -683,7 +683,7 @@ export function DocumentsSpravkiPage() {
                 type="button"
                 className="documents-spravki-page__download"
                 disabled={selectedStudentsCount === 0 || isDownloading}
-                onClick={() => handleDownloadArchive(archiveOption)}
+                onClick={() => handleDownloadArchive('all')}
               >
                 Сформировать архив с документами
               </button>
@@ -699,7 +699,7 @@ export function DocumentsSpravkiPage() {
               </button>
               {openArchiveMenu ? (
                 <div className="documents-spravki-page__menu">
-                  {archiveOptions.slice(1).map((option) => (
+                  {archiveOptions.map((option) => (
                     <button key={option.id} type="button" onClick={() => handleDownloadArchive(option.id)}>
                       {option.label}
                     </button>
