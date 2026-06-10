@@ -186,28 +186,48 @@
 .participants-page__details-actions {
   grid-column: 1 / -1;
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 10px;
   margin-top: 8px;
 }
 
-.participants-page__edit-link {
+.participants-page__edit-link,
+.participants-page__delete-button {
   display: inline-flex;
   min-height: 42px;
   align-items: center;
   justify-content: center;
   padding: 10px 18px;
+  border: 0;
   border-radius: 8px;
-  background: #1c63b7;
   color: #ffffff;
   font-size: 0.95rem;
+  font: inherit;
   text-decoration: none;
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
+.participants-page__edit-link {
+  background: #1c63b7;
+}
+
+.participants-page__delete-button {
+  background: #b42318;
+  cursor: pointer;
+}
+
 .participants-page__edit-link:hover,
-.participants-page__edit-link:focus-visible {
+.participants-page__edit-link:focus-visible,
+.participants-page__delete-button:hover:enabled,
+.participants-page__delete-button:focus-visible:enabled {
   opacity: 0.92;
   transform: translateY(-1px);
+}
+
+.participants-page__delete-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .participants-page__details-section {
@@ -353,7 +373,8 @@
   }
 
   .participants-page__details-actions,
-  .participants-page__edit-link {
+  .participants-page__edit-link,
+  .participants-page__delete-button {
     width: 100%;
   }
 

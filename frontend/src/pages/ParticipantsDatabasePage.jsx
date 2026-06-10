@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { listBankDetails, listStudents } from '../lib/api.js';
+import { deleteStudent, listBankDetails, listStudents } from '../lib/api.js';
 import './ParticipantsDatabasePage.css';
 
 const PAGE_SIZE = 15;
@@ -116,7 +116,7 @@ function DetailList({ fields, source }) {
   );
 }
 
-function ParticipantRow({ student, isOpen, onToggle }) {
+function ParticipantRow({ student, isOpen, onToggle, onDelete, isDeleting }) {
   const [bankDetails, setBankDetails] = useState([]);
   const [bankStatus, setBankStatus] = useState({ type: 'idle', message: '' });
   const [hasLoadedBankDetails, setHasLoadedBankDetails] = useState(false);
@@ -178,6 +178,14 @@ function ParticipantRow({ student, isOpen, onToggle }) {
             <a className="participants-page__edit-link" href={`#edit-participant?id=${student.student_id}`}>
               Редактировать запись
             </a>
+            <button
+              className="participants-page__delete-button"
+              type="button"
+              onClick={() => onDelete(student)}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Удаление...' : 'Удаления участников'}
+            </button>
           </div>
 
           {studentFieldGroups.map((group) => (
@@ -212,6 +220,7 @@ export function ParticipantsDatabasePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [openStudentId, setOpenStudentId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [deletingStudentId, setDeletingStudentId] = useState(null);
   const [status, setStatus] = useState({ type: 'loading', message: 'Загрузка участников...' });
 
   useEffect(() => {
@@ -277,6 +286,31 @@ export function ParticipantsDatabasePage() {
     setCurrentPage(page);
   }
 
+  async function handleDeleteStudent(student) {
+    const fullName = getFullName(student) || `ID ${student.student_id}`;
+    const confirmed = window.confirm(`Удалить участника "${fullName}"?`);
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingStudentId(student.student_id);
+    setStatus({ type: 'loading', message: 'Удаление участника...' });
+
+    try {
+      await deleteStudent(student.student_id);
+      setStudents((current) => current.filter((item) => item.student_id !== student.student_id));
+      setOpenStudentId((current) => (current === student.student_id ? null : current));
+      setStatus({ type: 'idle', message: '' });
+    } catch (error) {
+      setStatus({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Не удалось удалить участника. Проверьте связанные данные.',
+      });
+    } finally {
+      setDeletingStudentId(null);
+    }
+  }
+
   return (
     <div className="participants-page">
       <div className="participants-page__hero">
@@ -316,6 +350,8 @@ export function ParticipantsDatabasePage() {
             student={student}
             isOpen={openStudentId === student.student_id}
             onToggle={() => setOpenStudentId((current) => (current === student.student_id ? null : student.student_id))}
+            onDelete={handleDeleteStudent}
+            isDeleting={deletingStudentId === student.student_id}
           />
         ))}
       </div>

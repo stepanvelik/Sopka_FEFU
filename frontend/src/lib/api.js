@@ -69,6 +69,12 @@ export async function updateStudent(studentId, payload) {
   });
 }
 
+export async function deleteStudent(studentId) {
+  return request(`/students/${studentId}`, {
+    method: 'DELETE',
+  });
+}
+
 export async function listStudents({ skip = 0, limit = 200, isActive = null } = {}) {
   const params = new URLSearchParams({
     skip: String(skip),
