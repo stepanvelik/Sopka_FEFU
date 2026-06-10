@@ -114,7 +114,7 @@ export function EventStatisticsPage() {
 
           <a
             className={`event-statistics-page__docs-link${selectedEventId ? '' : ' event-statistics-page__docs-link--disabled'}`}
-            href={selectedEventId ? `#documents-spravki?event_id=${selectedEventId}` : '#event-statistics'}
+            href={selectedEventId ? `#event-spravki?event_id=${selectedEventId}` : '#event-statistics'}
             aria-disabled={!selectedEventId}
           >
             Перейти к документам мероприятия

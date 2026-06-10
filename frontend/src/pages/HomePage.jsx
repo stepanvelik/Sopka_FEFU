@@ -4,9 +4,9 @@ import './HomePage.css';
 
 const primaryActions = [
   { id: 'student-events', label: 'Справка по студенту', href: '#student-events', meta: 'Отчёты' },
+  { id: 'event-spravki', label: 'Справки по мероприятию', href: '#event-spravki', meta: 'Документы' },
   { id: 'documents-spravki', label: 'Документы на трудоустройство', href: '#documents-spravki', meta: 'Документы' },
   { id: 'create-event', label: 'Создать мероприятие', href: '#create-event', meta: 'Мероприятия' },
-  { id: 'participants-summary', label: 'Сводная таблица', href: '#participants-summary', meta: 'Отчёты' },
 ];
 
 const navigationGroups = [
@@ -30,7 +30,7 @@ const navigationGroups = [
     title: 'Отчёты и документы',
     links: [
       { label: 'Участие студента', href: '#student-events' },
-      { label: 'Справки', href: '#student-events?document=spravki' },
+      { label: 'Справки', href: '#event-spravki' },
       { label: 'Сводная таблица', href: '#participants-summary' },
       { label: 'Трудоустройство', href: '#documents-spravki' },
     ],

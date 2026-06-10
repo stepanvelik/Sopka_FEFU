@@ -243,7 +243,7 @@ const EventDetailsPage = ({ eventId, embedded = false }) => {
           <div className="participants-block__top">
             <h2 className="participants-block__title">Участники</h2>
             {!embedded ? (
-              <a className="participants-block__documents-link" href={`#documents-spravki?event_id=${eventId}`}>
+              <a className="participants-block__documents-link" href={`#event-spravki?event_id=${eventId}`}>
                 Перейти к документам мероприятия
               </a>
             ) : null}

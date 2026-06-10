@@ -78,8 +78,12 @@ function triggerDownload(blob, filename) {
 }
 
 function sanitizeOptional(value) {
-  const trimmed = String(value || '').trim();
+  const trimmed = String(value || '').replace(/\s+/g, ' ').trim();
   return trimmed === '' ? null : trimmed;
+}
+
+function sanitizeRequired(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
 }
 
 function hasValue(value) {
@@ -558,10 +562,10 @@ export function DocumentsSpravkiPage() {
 
       if (shouldSaveBank) {
         const bankPayload = {
-          bank_name: draft.bank_name.trim(),
-          bik: draft.bik.trim(),
+          bank_name: sanitizeRequired(draft.bank_name),
+          bik: sanitizeRequired(draft.bik),
           correspondent_account: sanitizeOptional(draft.correspondent_account),
-          account_number: draft.account_number.trim(),
+          account_number: sanitizeRequired(draft.account_number),
           is_active: true,
         };
         nextBankDetails = bankDetails?.bank_details_id
@@ -674,12 +678,12 @@ export function DocumentsSpravkiPage() {
           </label>
 
           <label className="documents-spravki-page__field">
-            <span>С даты</span>
+            <span>Дата регистрации с</span>
             <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
           </label>
 
           <label className="documents-spravki-page__field">
-            <span>По дату</span>
+            <span>Дата регистрации по</span>
             <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
           </label>
         </div>

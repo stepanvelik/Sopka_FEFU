@@ -31,7 +31,11 @@ MONTH_GENITIVE = (
 
 
 def _student_full_name(student: Student) -> str:
-    return " ".join(part for part in (student.last_name, student.first_name, student.middle_name) if part)
+    return _clean_text(" ".join(part for part in (student.last_name, student.first_name, student.middle_name) if part))
+
+
+def _clean_text(value: str | None) -> str:
+    return re.sub(r"\s+", " ", value or "").strip()
 
 
 def _digits_only(value: str | None, *, max_len: int | None = None) -> str:
@@ -132,8 +136,8 @@ async def build_rekvizity_payload(
     issue_year_with_month = f"{issue_month} {issue_year}".strip()
     snils_1, snils_2, snils_3, snils_control = _format_snils_parts(student.snils)
 
-    registration_address = (student.registration_address or "").strip()
-    residential_address = (student.residential_address or "").strip() or registration_address
+    registration_address = _clean_text(student.registration_address)
+    residential_address = _clean_text(student.residential_address) or registration_address
 
     assert bank_details is not None
     account_number = _digits_only(bank_details.account_number, max_len=20)
@@ -150,7 +154,7 @@ async def build_rekvizity_payload(
         "passport_number": passport_number,
         "passport_issue_day": issue_day,
         "passport_issue_year_with_month": issue_year_with_month,
-        "passport_issued_by": (student.passport_issued_by or "").strip(),
+        "passport_issued_by": _clean_text(student.passport_issued_by),
         "registration_address": registration_address,
         "residential_address": residential_address,
         "snils_1": snils_1,
