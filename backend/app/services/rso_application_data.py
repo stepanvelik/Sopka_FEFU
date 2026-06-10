@@ -39,7 +39,7 @@ async def build_rso_application_payload(
         "registration_address": student.registration_address or "",
         "residential_address": student.residential_address or "",
         "phone": str(student.phone) if student.phone else "",
-        "email": student.email or "",
+        "email": (student.corporate_email or student.email or "").strip(),
         "passport_series": student.passport_series or "",
         "passport_number": student.passport_number or "",
         "passport_issued_by": student.passport_issued_by or "",
