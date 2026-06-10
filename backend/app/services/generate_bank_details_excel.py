@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 
@@ -18,6 +19,7 @@ from sqlalchemy.orm import selectinload
 from app.models.bank_details import BankDetails
 from app.models.student import Student
 from app.services.fio_inflection import fio_to_dative
+from app.services.gph_contract_data import GphFields, gph_fields_to_excel_values, resolve_gph_fields
 
 
 HEADERS = [
@@ -177,22 +179,23 @@ def _missing_fields(student: Student, bank_details: BankDetails | None) -> list[
     return missing
 
 
-def _student_row(student: Student, bank_details: BankDetails) -> list[str | int]:
+def _student_row(student: Student, bank_details: BankDetails, gph_fields: GphFields) -> list[str | int]:
     registration_address = (student.registration_address or "").strip()
     residential_address = (student.residential_address or "").strip() or registration_address
+    gph = gph_fields_to_excel_values(gph_fields)
 
     return [
-        "",
-        "",
-        "",
-        "",
+        gph["contract_number"],
+        gph["contract_date"],
+        gph["contract_term_text"],
+        gph["service_term_text"],
         _student_full_name(student),
         student.last_name,
         _initials(student),
         fio_to_dative(student.last_name, student.first_name, student.middle_name),
         fio_to_dative(student.last_name, "", "").strip() or student.last_name,
-        "",
-        "",
+        gph["reward_amount"],
+        gph["reward_amount_text"],
         _format_date(student.birth_date),
         _format_snils(student.snils),
         _format_inn(student.inn),
@@ -208,14 +211,28 @@ def _student_row(student: Student, bank_details: BankDetails) -> list[str | int]
         (bank_details.bank_name or "").strip(),
         _digits_only(bank_details.bik, max_len=9),
         _digits_only(bank_details.correspondent_account, max_len=23),
-        "",
-        "",
-        "",
-        "",
+        gph["customer_name"],
+        gph["customer_status"],
+        gph["customer_phone"],
+        gph["customer_email"],
     ]
 
 
-async def build_bank_details_rows(session: AsyncSession, student_ids: list[int]) -> list[list[str | int]]:
+@dataclass(frozen=True)
+class BankDetailsStudentExport:
+    student_id: int
+    full_name: str
+    row: list[str | int]
+
+
+def make_student_folder_name(full_name: str, student_id: int | None = None) -> str:
+    safe = re.sub(r'[\\/:*?"<>|]', "", full_name).strip().replace(" ", "_")
+    if not safe:
+        safe = f"student_{student_id or 'unknown'}"
+    return safe
+
+
+async def build_bank_details_exports(session: AsyncSession, student_ids: list[int]) -> list[BankDetailsStudentExport]:
     unique_ids = list(dict.fromkeys(student_ids))
     if not unique_ids:
         raise HTTPException(status_code=422, detail="Выберите участников для формирования Excel файла.")
@@ -232,7 +249,7 @@ async def build_bank_details_rows(session: AsyncSession, student_ids: list[int])
     if missing_students:
         raise HTTPException(status_code=404, detail=f"Студенты не найдены: {', '.join(map(str, missing_students))}.")
 
-    rows: list[list[str | int]] = []
+    exports: list[BankDetailsStudentExport] = []
     for student_id in unique_ids:
         student = students_by_id[student_id]
         bank_details = _pick_active_bank_details(list(student.bank_details_rows))
@@ -243,9 +260,16 @@ async def build_bank_details_rows(session: AsyncSession, student_ids: list[int])
                 detail=f"Для студента {_student_full_name(student)} не заполнены поля: {', '.join(missing)}.",
             )
         assert bank_details is not None
-        rows.append(_student_row(student, bank_details))
+        gph_fields = await resolve_gph_fields(session, student_id)
+        exports.append(
+            BankDetailsStudentExport(
+                student_id=student_id,
+                full_name=_student_full_name(student),
+                row=_student_row(student, bank_details, gph_fields),
+            )
+        )
 
-    return rows
+    return exports
 
 
 def generate_bank_details_excel(rows: list[list[str | int]], output_path: Path) -> None:
@@ -291,3 +315,12 @@ def generate_bank_details_excel(rows: list[list[str | int]], output_path: Path) 
 
 def make_bank_details_excel_filename() -> str:
     return "Заполнение_данных_банк_реквизиты.xlsx"
+
+
+def make_bank_details_excel_filename_for_student(full_name: str, student_id: int | None = None) -> str:
+    safe = make_student_folder_name(full_name, student_id)
+    return f"{safe}_Заполнение_данных_банк_реквизиты.xlsx"
+
+
+def make_bank_details_archive_filename() -> str:
+    return "Банковские_реквизиты_ГПХ.zip"

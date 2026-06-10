@@ -411,7 +411,7 @@ export async function downloadEmploymentBankDetailsExcel({ studentIds = [] } = {
   });
 
   const suffix = params.toString() ? `?${params.toString()}` : '';
-  return downloadFile(`/reports/employment/bank-details.xlsx${suffix}`, 'Заполнение_данных_банк_реквизиты.xlsx');
+  return downloadFile(`/reports/employment/bank-details.zip${suffix}`, 'Банковские_реквизиты_ГПХ.zip');
 }
 
 export { API_BASE_URL };

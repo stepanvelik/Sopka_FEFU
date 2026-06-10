@@ -66,6 +66,20 @@
   gap: 10px;
 }
 
+.documents-spravki-page__selected-count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-sm);
+  background: #ffffff;
+  color: var(--app-color-text);
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .documents-spravki-page__checkbox {
   display: inline-flex;
   align-items: center;

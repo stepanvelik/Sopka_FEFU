@@ -30,9 +30,11 @@ from app.schemas.reports import (
     StudentSearchMatch,
 )
 from app.services.generate_bank_details_excel import (
-    build_bank_details_rows,
+    build_bank_details_exports,
     generate_bank_details_excel,
-    make_bank_details_excel_filename,
+    make_bank_details_archive_filename,
+    make_bank_details_excel_filename_for_student,
+    make_student_folder_name,
 )
 from app.services.generate_opd_consent import (
     generate_opd_consent,
@@ -46,8 +48,8 @@ from app.services.generate_rso_application import (
     make_rso_filename,
     resolve_rso_template_path,
 )
-from app.services.opd_consent_data import build_opd_consent_payload
 from app.services.generate_spravka import generate_spravka, make_filename, resolve_template_path
+from app.services.opd_consent_data import build_opd_consent_payload
 from app.services.rekvizity_data import build_rekvizity_payload
 from app.services.rso_application_data import build_rso_application_payload
 from app.services.spravka_data import build_spravka_payload
@@ -613,40 +615,38 @@ async def download_employment_documents_archive(
 
     try:
         with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-            used_names: set[str] = set()
+            used_folder_names: set[str] = set()
             for student_id in unique_ids:
+                student = await session.get(Student, student_id)
+                if student is None:
+                    raise HTTPException(status_code=404, detail=f"Студент не найден: {student_id}.")
+
+                full_name = _student_full_name(student.last_name, student.first_name, student.middle_name)
+                folder_name = make_student_folder_name(full_name, student_id)
+                if folder_name in used_folder_names:
+                    folder_name = f"{folder_name}_{student_id}"
+                used_folder_names.add(folder_name)
+
                 if "file_1" in documents:
                     rso_payload = await build_rso_application_payload(session, student_id=student_id)
                     filename = make_rso_filename(rso_payload["full_name"])
-                    if filename in used_names:
-                        filename = f"{student_id}_{filename}"
-                    used_names.add(filename)
-
-                    docx_path = tmp_dir / filename
+                    docx_path = tmp_dir / f"{student_id}_{filename}"
                     generate_rso_application(rso_payload, templates["file_1"], docx_path)
-                    archive.write(docx_path, arcname=filename)
+                    archive.write(docx_path, arcname=f"{folder_name}/{filename}")
 
                 if "file_2" in documents:
                     opd_payload = await build_opd_consent_payload(session, student_id=student_id)
                     filename = make_opd_filename(opd_payload["fio"])
-                    if filename in used_names:
-                        filename = f"{student_id}_{filename}"
-                    used_names.add(filename)
-
-                    docx_path = tmp_dir / filename
+                    docx_path = tmp_dir / f"{student_id}_{filename}"
                     generate_opd_consent(opd_payload, templates["file_2"], docx_path)
-                    archive.write(docx_path, arcname=filename)
+                    archive.write(docx_path, arcname=f"{folder_name}/{filename}")
 
                 if "file_3" in documents:
                     rekvizity_payload = await build_rekvizity_payload(session, student_id=student_id)
                     filename = make_rekvizity_filename(rekvizity_payload["fio"])
-                    if filename in used_names:
-                        filename = f"{student_id}_{filename}"
-                    used_names.add(filename)
-
-                    docx_path = tmp_dir / filename
+                    docx_path = tmp_dir / f"{student_id}_{filename}"
                     generate_rekvizity(rekvizity_payload, templates["file_3"], docx_path)
-                    archive.write(docx_path, arcname=filename)
+                    archive.write(docx_path, arcname=f"{folder_name}/{filename}")
     except HTTPException:
         shutil.rmtree(tmp_dir, ignore_errors=True)
         raise
@@ -663,26 +663,38 @@ async def download_employment_documents_archive(
     )
 
 
-@router.get("/employment/bank-details.xlsx")
-async def download_employment_bank_details_excel(
+@router.get("/employment/bank-details.zip")
+async def download_employment_bank_details_archive(
     session: AsyncSession = Depends(get_session),
     student_ids: list[int] = Query(..., min_length=1),
 ) -> FileResponse:
-    rows = await build_bank_details_rows(session, student_ids)
+    exports = await build_bank_details_exports(session, student_ids)
 
-    fd, tmp_path = tempfile.mkstemp(suffix=".xlsx")
-    os.close(fd)
-    output_path = Path(tmp_path)
+    tmp_dir = Path(tempfile.mkdtemp(prefix="employment_bank_details_"))
+    zip_path = tmp_dir / "bank_details.zip"
 
     try:
-        generate_bank_details_excel(rows, output_path)
+        with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            used_names: set[str] = set()
+            for export in exports:
+                filename = make_bank_details_excel_filename_for_student(export.full_name, export.student_id)
+                if filename in used_names:
+                    filename = make_bank_details_excel_filename_for_student(
+                        f"{export.full_name}_{export.student_id}",
+                        export.student_id,
+                    )
+                used_names.add(filename)
+
+                excel_path = tmp_dir / f"{export.student_id}_{filename}"
+                generate_bank_details_excel([export.row], excel_path)
+                archive.write(excel_path, arcname=filename)
     except Exception as exc:
-        output_path.unlink(missing_ok=True)
-        raise HTTPException(status_code=500, detail="Не удалось сформировать Excel файл с банковскими реквизитами.") from exc
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        raise HTTPException(status_code=500, detail="Не удалось сформировать архив с Excel файлами.") from exc
 
     return FileResponse(
-        path=output_path,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        filename=make_bank_details_excel_filename(),
-        background=BackgroundTask(lambda: output_path.unlink(missing_ok=True)),
+        path=zip_path,
+        media_type="application/zip",
+        filename=make_bank_details_archive_filename(),
+        background=BackgroundTask(lambda: shutil.rmtree(tmp_dir, ignore_errors=True)),
     )

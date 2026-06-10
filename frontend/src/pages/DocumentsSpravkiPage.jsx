@@ -35,8 +35,6 @@ const archiveOptions = [
   { id: 'file_3', label: 'Реквизиты' },
 ];
 
-const NOT_IMPLEMENTED_ARCHIVE_MESSAGE = 'Формирование документа «Согласие ОПД» пока не реализовано.';
-
 const STUDENTS_PAGE_SIZE = 200;
 
 function getDigits(value) {
@@ -596,14 +594,14 @@ export function DocumentsSpravkiPage() {
     }
 
     setIsDownloading(true);
-    setStatus({ type: 'loading', message: 'Формирование Excel файла с банковскими реквизитами...' });
+    setStatus({ type: 'loading', message: 'Формирование архива с Excel файлами по выбранным участникам...' });
 
     try {
       const { blob, filename } = await downloadEmploymentBankDetailsExcel({
         studentIds: getExportStudentIds(),
       });
       triggerDownload(blob, filename);
-      setStatus({ type: 'idle', message: 'Excel файл с банковскими реквизитами сформирован и загружен.' });
+      setStatus({ type: 'idle', message: 'Архив с Excel файлами по участникам сформирован и загружен.' });
     } catch (error) {
       setStatus({
         type: 'error',
@@ -634,13 +632,6 @@ export function DocumentsSpravkiPage() {
       return;
     }
 
-    if (optionId === 'file_2') {
-      setOpenArchiveMenu(false);
-      setArchiveOption(optionId);
-      setStatus({ type: 'error', message: NOT_IMPLEMENTED_ARCHIVE_MESSAGE });
-      return;
-    }
-
     setOpenArchiveMenu(false);
     setArchiveOption(optionId);
     setIsDownloading(true);
@@ -653,7 +644,7 @@ export function DocumentsSpravkiPage() {
       });
       triggerDownload(blob, filename);
       const successMessage = optionId === 'all'
-        ? 'Архив сформирован: заявление на вступление и реквизиты. «Согласие ОПД» пока не реализовано.'
+        ? 'Архив сформирован: заявление на вступление, согласие ОПД и реквизиты.'
         : 'Архив с документами сформирован и загружен.';
       setStatus({ type: 'idle', message: successMessage });
     } catch (error) {
@@ -714,6 +705,9 @@ export function DocumentsSpravkiPage() {
           </div>
 
           <div className="documents-spravki-page__download-actions">
+            <span className="documents-spravki-page__selected-count">
+              Выбрано участников: {selectedStudentsCount}
+            </span>
             <button
               type="button"
               className="documents-spravki-page__download"
@@ -753,6 +747,7 @@ export function DocumentsSpravkiPage() {
                       className={option.id === archiveOption ? 'is-selected' : ''}
                       onClick={() => handleSelectArchiveOption(option.id)}
                     >
+
                       {option.label}
                     </button>
                   ))}

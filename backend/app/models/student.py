@@ -8,6 +8,7 @@ from app.models.base import Base
 
 if TYPE_CHECKING:
     from app.models.bank_details import BankDetails
+    from app.models.gph_contract_data import GphContractData
 
 
 class Student(Base):
@@ -46,6 +47,11 @@ class Student(Base):
 
     bank_details_rows: Mapped[list["BankDetails"]] = relationship(
         "BankDetails",
+        back_populates="student",
+        passive_deletes=True,
+    )
+    gph_contract_data_rows: Mapped[list["GphContractData"]] = relationship(
+        "GphContractData",
         back_populates="student",
         passive_deletes=True,
     )
