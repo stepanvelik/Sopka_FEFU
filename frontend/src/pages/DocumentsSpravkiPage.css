@@ -164,7 +164,7 @@
   position: absolute;
   top: calc(100% + 2px);
   right: 0;
-  z-index: 5;
+  z-index: 30;
   min-width: 176px;
   padding: 6px 0;
   border: 1px solid var(--app-color-border);
@@ -186,9 +186,14 @@
 }
 
 .documents-spravki-page__menu button:hover,
-.documents-spravki-page__menu button:focus-visible {
+.documents-spravki-page__menu button:focus-visible,
+.documents-spravki-page__menu button.is-selected {
   background: var(--app-color-soft);
   outline: none;
+}
+
+.documents-spravki-page__menu button.is-selected {
+  font-weight: 700;
 }
 
 .documents-spravki-page__status {

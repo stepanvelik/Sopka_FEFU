@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 import {
   createBankDetails,
@@ -29,10 +29,13 @@ const fieldFormatters = {
 };
 
 const archiveOptions = [
+  { id: 'all', label: 'Все документы' },
   { id: 'file_1', label: 'Заявление на вступление' },
   { id: 'file_2', label: 'Согласие ОПД' },
   { id: 'file_3', label: 'Реквизиты' },
 ];
+
+const NOT_IMPLEMENTED_ARCHIVE_MESSAGE = 'Формирование документа «Согласие ОПД» пока не реализовано.';
 
 const STUDENTS_PAGE_SIZE = 200;
 
@@ -397,10 +400,27 @@ export function DocumentsSpravkiPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [selectedOnly, setSelectedOnly] = useState(false);
+  const [archiveOption, setArchiveOption] = useState('all');
   const [openArchiveMenu, setOpenArchiveMenu] = useState(false);
+  const archiveMenuRef = useRef(null);
   const [savingStudentId, setSavingStudentId] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [status, setStatus] = useState({ type: 'loading', message: 'Загрузка участников...' });
+
+  useEffect(() => {
+    if (!openArchiveMenu) {
+      return undefined;
+    }
+
+    function handleDocumentClick(event) {
+      if (archiveMenuRef.current && !archiveMenuRef.current.contains(event.target)) {
+        setOpenArchiveMenu(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleDocumentClick);
+    return () => document.removeEventListener('mousedown', handleDocumentClick);
+  }, [openArchiveMenu]);
 
   useEffect(() => {
     let isMounted = true;
@@ -594,13 +614,35 @@ export function DocumentsSpravkiPage() {
     }
   }
 
-  async function handleDownloadArchive(optionId = 'all') {
+  const selectedArchiveLabel = useMemo(
+    () => archiveOptions.find((option) => option.id === archiveOption)?.label || 'документами',
+    [archiveOption],
+  );
+
+  function handleSelectArchiveOption(optionId) {
+    setArchiveOption(optionId);
+    setOpenArchiveMenu(false);
+    const label = archiveOptions.find((option) => option.id === optionId)?.label;
+    if (label) {
+      setStatus({ type: 'idle', message: `Выбран документ: ${label}.` });
+    }
+  }
+
+  async function handleDownloadArchive(optionId = archiveOption) {
     if (selectedIds.length === 0) {
       setStatus({ type: 'error', message: 'Выберите участников для формирования архива.' });
       return;
     }
 
+    if (optionId === 'file_2') {
+      setOpenArchiveMenu(false);
+      setArchiveOption(optionId);
+      setStatus({ type: 'error', message: NOT_IMPLEMENTED_ARCHIVE_MESSAGE });
+      return;
+    }
+
     setOpenArchiveMenu(false);
+    setArchiveOption(optionId);
     setIsDownloading(true);
     setStatus({ type: 'loading', message: 'Формирование архива с документами...' });
 
@@ -610,7 +652,10 @@ export function DocumentsSpravkiPage() {
         file: optionId === 'all' ? '' : optionId,
       });
       triggerDownload(blob, filename);
-      setStatus({ type: 'idle', message: 'Архив с документами сформирован и загружен.' });
+      const successMessage = optionId === 'all'
+        ? 'Архив сформирован: заявление на вступление и реквизиты. «Согласие ОПД» пока не реализовано.'
+        : 'Архив с документами сформирован и загружен.';
+      setStatus({ type: 'idle', message: successMessage });
     } catch (error) {
       setStatus({
         type: 'error',
@@ -678,29 +723,36 @@ export function DocumentsSpravkiPage() {
               Сформировать EXCEL файл с банк. рек-тами
             </button>
 
-            <div className="documents-spravki-page__split-action">
+            <div className="documents-spravki-page__split-action" ref={archiveMenuRef}>
               <button
                 type="button"
                 className="documents-spravki-page__download"
                 disabled={selectedStudentsCount === 0 || isDownloading}
-                onClick={() => handleDownloadArchive('all')}
+                onClick={() => handleDownloadArchive(archiveOption)}
               >
-                Сформировать архив с документами
+                Сформировать архив: {selectedArchiveLabel}
               </button>
               <button
                 type="button"
                 className="documents-spravki-page__menu-button"
-                disabled={selectedStudentsCount === 0 || isDownloading}
+                disabled={isDownloading}
                 onClick={() => setOpenArchiveMenu((current) => !current)}
-                aria-label="Выбрать состав архива"
+                aria-label="Выбрать тип документа"
                 aria-expanded={openArchiveMenu}
+                aria-haspopup="menu"
               >
                 ▾
               </button>
               {openArchiveMenu ? (
-                <div className="documents-spravki-page__menu">
+                <div className="documents-spravki-page__menu" role="menu">
                   {archiveOptions.map((option) => (
-                    <button key={option.id} type="button" onClick={() => handleDownloadArchive(option.id)}>
+                    <button
+                      key={option.id}
+                      type="button"
+                      role="menuitem"
+                      className={option.id === archiveOption ? 'is-selected' : ''}
+                      onClick={() => handleSelectArchiveOption(option.id)}
+                    >
                       {option.label}
                     </button>
                   ))}
