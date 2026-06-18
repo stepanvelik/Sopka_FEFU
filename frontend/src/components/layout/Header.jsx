@@ -39,9 +39,10 @@ const navGroups = [
   {
     label: 'Документы',
     href: '#documents-spravki',
-    routes: ['documents-spravki'],
+    routes: ['documents-spravki', 'event-spravki'],
     items: [
-      { label: 'Справки по мероприятию', href: '#documents-spravki', route: 'documents-spravki' },
+      { label: 'Трудоустройство', href: '#documents-spravki', route: 'documents-spravki' },
+      { label: 'Справки', href: '#event-spravki', route: 'event-spravki' },
     ],
   },
 ];

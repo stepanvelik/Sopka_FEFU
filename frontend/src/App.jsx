@@ -12,6 +12,7 @@ import { EventCreatePage } from './pages/EventCreatePage.jsx';
 import { EventsListPage } from './pages/EventsListPage.jsx';
 import { EventEditPage } from './pages/EventEditPage.jsx';
 import { DocumentsSpravkiPage } from './pages/DocumentsSpravkiPage.jsx';
+import { EventSpravkiPage } from './pages/EventSpravkiPage.jsx';
 import EventDetailsPage from './pages/EventDetailsPage.jsx';
 import './styles/app.css';
 
@@ -86,6 +87,7 @@ export default function App() {
   const isStudentEventsPage = route === 'student-events';
   const isEventStatisticsPage = route === 'event-statistics';
   const isDocumentsSpravkiPage = route === 'documents-spravki';
+  const isEventSpravkiPage = route === 'event-spravki';
 
   const isWidePage =
     route === 'create' ||
@@ -95,6 +97,7 @@ export default function App() {
     route === 'student-events' ||
     route === 'event-statistics' ||
     route === 'documents-spravki' ||
+    route === 'event-spravki' ||
     route === 'create-event' ||
     route === 'events-list' ||
     isEditEventPage ||
@@ -109,6 +112,7 @@ export default function App() {
     route !== 'student-events' &&
     route !== 'event-statistics' &&
     route !== 'documents-spravki' &&
+    route !== 'event-spravki' &&
     route !== 'create-event' &&
     route !== 'events-list' &&
     route !== 'edit-event' &&
@@ -126,6 +130,7 @@ export default function App() {
         {isStudentEventsPage ? <StudentEventsPage /> : null}
         {isEventStatisticsPage ? <EventStatisticsPage /> : null}
         {isDocumentsSpravkiPage ? <DocumentsSpravkiPage /> : null}
+        {isEventSpravkiPage ? <EventSpravkiPage /> : null}
         {isEditParticipantPage ? <ParticipantEditPage studentId={participantEditId} /> : null}
 
         {route === 'events-list' ? <EventsListPage /> : null}

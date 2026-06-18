@@ -23,6 +23,27 @@ EVENT_TYPE_SEED = (
 async def apply_startup_schema_patches() -> None:
     """Добавляет колонки, которых может не быть в старых БД. Безопасно вызывать многократно."""
     async with engine.begin() as conn:
+        await conn.execute(text("alter table students drop constraint if exists ck_students_phone"))
+        await conn.execute(text("alter table students alter column phone type varchar(30) using phone::varchar"))
+        await conn.execute(text("alter table students alter column phone set not null"))
+        await conn.execute(
+            text(
+                """
+                do $$
+                begin
+                    if not exists (
+                        select 1
+                        from pg_constraint
+                        where conname = 'ck_students_phone'
+                          and conrelid = 'students'::regclass
+                    ) then
+                        alter table students
+                            add constraint ck_students_phone check (phone ~ '[0-9]');
+                    end if;
+                end $$;
+                """
+            ),
+        )
         await conn.execute(
             text("alter table events add column if not exists event_daily_schedule jsonb"),
         )

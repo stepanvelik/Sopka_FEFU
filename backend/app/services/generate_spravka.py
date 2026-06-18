@@ -23,7 +23,8 @@ YELLOW_RUN_RE = re.compile(
     r"<w:r(?:[^>]*)>"
     r"(?:<w:rPr>(?:(?!</w:rPr>).)*"
     r'<w:highlight w:val="yellow"/>(?:(?!</w:rPr>).)*</w:rPr>)?'
-    r"\s*<w:t[^>]*>([^<]*)</w:t>"
+    r"\s*(?:<w:softHyphen/>)?\s*"
+    r"<w:t[^>]*>([^<]*)</w:t>"
     r"\s*</w:r>",
     re.DOTALL,
 )

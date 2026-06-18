@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Any, Literal
@@ -50,6 +51,7 @@ class ExcelImportService:
         "study_group",
         "institute",
         "phone",
+        "email",
         "corporate_email",
         "registration_address",
         "residential_address",
@@ -80,17 +82,53 @@ class ExcelImportService:
         ],
         "study_group": ["группа", "study_group", "group", "учебная группа", "академическая группа"],
         "phone": ["телефон", "phone", "phone number", "номер телефона", "контактный телефон"],
-        "corporate_email": ["корпоративный email", "corporate_email", "корпоративная почта", "email", "почта", "e-mail"],
+        "email": [
+            "email",
+            "e-mail",
+            "почта",
+            "электронная почта",
+            "личная почта",
+            "personal email",
+            "email address",
+        ],
+        "corporate_email": [
+            "корпоративный email",
+            "corporate_email",
+            "corporate email",
+            "корпоративная почта",
+            "адрес корпоративной почты",
+            "адрес электронной корпоративной почты",
+            "электронная корпоративная почта",
+            "рабочая почта",
+            "почта двфу",
+            "email двфу",
+            "e-mail двфу",
+        ],
         "passport_series": ["серия паспорта", "passport_series", "серия", "passport series"],
         "passport_number": ["номер паспорта", "passport_number", "номер", "passport number"],
         "passport_issued_by": ["кем выдан", "passport_issued_by", "issued by", "кем выдан паспорт"],
         "passport_issue_date": ["дата выдачи", "passport_issue_date", "issue date", "дата выдачи паспорта"],
         "passport_department_code": ["код подразделения", "passport_department_code", "department code", "код подразделения паспорта"],
-        "registration_address": ["адрес регистрации", "registration_address", "registration address", "прописка"],
-        "residential_address": ["адрес проживания", "residential_address", "residential address", "фактический адрес"],
+        "registration_address": [
+            "адрес регистрации",
+            "registration_address",
+            "registration address",
+            "прописка",
+            "место регистрации по паспорту",
+            "место регистрации по паспорту прописка",
+
+            "место регистрации по паспорту (\"прописка\")",
+        ],
+        "residential_address": [
+            "адрес проживания",
+            "residential_address",
+            "residential address",
+            "фактический адрес",
+            "место фактического проживания",
+        ],
         "snils": ["снилс", "snils", "снилс номер", "страховой номер", "номер снилс"],
         "inn": ["инн", "inn", "инн номер", "номер инн", "идентификационный номер"],
-        "bank_name": ["банк", "bank_name", "bank", "наименование банка", "название банка"],
+        "bank_name": ["банк", "bank_name", "bank", "ваш банк", "наименование банка", "название банка"],
         "bik": ["бик", "bik", "bik code", "бик банка"],
         "correspondent_account": ["корреспондентский счет", "correspondent_account", "корр. счет", "к/с"],
         "account_number": [
@@ -111,6 +149,9 @@ class ExcelImportService:
         "birth_date": ["датарожд", "birth", "dob"],
         "institute": ["институт", "школ", "faculty", "institute"],
         "study_group": ["груп", "studygroup", "group"],
+        "corporate_email": ["корпоратив", "двфу", "dvfu", "corporateemail"],
+        "email": ["email", "почт"],
+        "inn": ["инн", "inn"],
         "bank_name": ["банк", "bank"],
         "bik": ["бик", "bik"],
         "correspondent_account": ["корр", "correspondent", "ks"],
@@ -249,12 +290,14 @@ class ExcelImportService:
                 rows = [i + 2 for i in validated[is_missing].index.tolist()]
                 errors.append(f"Строки {rows}: отсутствует обязательное поле '{field}'")
 
-        not_null_email = validated["corporate_email"].dropna()
-        if len(not_null_email) > 0:
+        for field in ["email", "corporate_email"]:
+            not_null_email = validated[field].dropna()
+            if len(not_null_email) == 0:
+                continue
             invalid = ~not_null_email.astype(str).str.contains("@", na=False)
             if invalid.any():
                 rows = [i + 2 for i in invalid[invalid].index.tolist()]
-                errors.append(f"Строки {rows}: corporate_email должен содержать '@'")
+                errors.append(f"Строки {rows}: {field} должен содержать '@'")
 
         for field in ["snils", "inn"]:
             normalized = validated[field].map(self._normalize_id_field).dropna()
@@ -288,18 +331,20 @@ class ExcelImportService:
         s = str(value).strip()
         if not s:
             return None
-        try:
-            f = float(s)
-            if f.is_integer():
-                s = str(int(f))
-        except ValueError:
-            pass
+        if re.fullmatch(r"\d+\.0+", s):
+            s = s.split(".", 1)[0]
         digits = "".join(ch for ch in s if ch.isdigit())
         return digits or None
 
-    def _normalize_phone(self, value: Any) -> int | None:
+    def _normalize_phone(self, value: Any) -> str | None:
         digits = self._normalize_id_field(value)
-        return int(digits) if digits else None
+        if not digits:
+            return None
+        if len(digits) == 10:
+            digits = "7" + digits
+        if len(digits) == 11 and digits.startswith("8"):
+            digits = "7" + digits[1:]
+        return digits
 
     def _prepare_student(self, row: pd.Series) -> dict[str, Any]:
         student: dict[str, Any] = {}
@@ -316,7 +361,6 @@ class ExcelImportService:
             else:
                 student[field] = self._clean(val)
 
-        student["email"] = None
         student["rso_member_ticket_no"] = None
         student["is_active"] = True
         return student

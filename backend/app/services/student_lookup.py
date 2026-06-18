@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.student import Student
@@ -10,19 +10,25 @@ PLACEHOLDER_STUDY_GROUP = "—"
 PLACEHOLDER_INSTITUTE = "—"
 
 
-def normalize_phone(phone: int) -> int:
+def normalize_phone(phone: int | str | None) -> str | None:
+    if phone is None:
+        return None
     digits = "".join(ch for ch in str(phone) if ch.isdigit())
     if len(digits) == 10:
         digits = "7" + digits
     if len(digits) == 11 and digits.startswith("8"):
         digits = "7" + digits[1:]
-    return int(digits)
+    return digits or None
 
 
-async def find_student_by_phone(session: AsyncSession, phone: int) -> Student | None:
+async def find_student_by_phone(session: AsyncSession, phone: int | str) -> Student | None:
     normalized = normalize_phone(phone)
+    if not normalized:
+        return None
     result = await session.execute(
-        select(Student).where(Student.phone == normalized).limit(1)
+        select(Student)
+        .where(func.regexp_replace(Student.phone, r"\D", "", "g") == normalized)
+        .limit(1)
     )
     return result.scalar_one_or_none()
 
@@ -33,9 +39,11 @@ async def find_or_create_student(
     last_name: str,
     first_name: str,
     middle_name: str | None,
-    phone: int,
+    phone: int | str,
 ) -> tuple[Student, bool]:
     normalized_phone = normalize_phone(phone)
+    if not normalized_phone:
+        raise ValueError("Некорректный номер телефона.")
     existing = await find_student_by_phone(session, normalized_phone)
     if existing is not None:
         return existing, False

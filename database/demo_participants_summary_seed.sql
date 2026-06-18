@@ -284,7 +284,7 @@ students_pool as (
             (79990039039::bigint),
             (79991140140::bigint)
     ) as phones(phone)
-        on phones.phone = s.phone
+        on phones.phone::text = nullif(regexp_replace(s.phone::text, '[^0-9]', '', 'g'), '')
 ),
 assignments as (
     select

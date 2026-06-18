@@ -69,6 +69,12 @@ export async function updateStudent(studentId, payload) {
   });
 }
 
+export async function deleteStudent(studentId) {
+  return request(`/students/${studentId}`, {
+    method: 'DELETE',
+  });
+}
+
 export async function listStudents({ skip = 0, limit = 200, isActive = null } = {}) {
   const params = new URLSearchParams({
     skip: String(skip),
@@ -364,6 +370,54 @@ export async function downloadEventSpravkiArchive({
   const filename = decodeURIComponent(rawName);
 
   return { blob, filename };
+}
+
+async function downloadFile(path, fallbackFilename) {
+  const response = await fetch(`${API_BASE_URL}${path}`);
+  if (!response.ok) {
+    let message = 'Не удалось сформировать файл.';
+    try {
+      const payload = await response.json();
+      if (typeof payload?.detail === 'string') {
+        message = payload.detail;
+      }
+    } catch {
+      // Keep fallback message for non-JSON errors.
+    }
+    throw new Error(message);
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get('Content-Disposition') || '';
+  const utfMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+  const plainMatch = disposition.match(/filename="?([^";]+)"?/i);
+  const rawName = utfMatch?.[1] || plainMatch?.[1] || fallbackFilename;
+  const filename = decodeURIComponent(rawName);
+
+  return { blob, filename };
+}
+
+export async function downloadEmploymentDocumentsArchive({ studentIds = [], file = '' } = {}) {
+  const params = new URLSearchParams();
+  studentIds.forEach((studentId) => {
+    params.append('student_ids', String(studentId));
+  });
+  if (file) {
+    params.set('file', file);
+  }
+
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return downloadFile(`/reports/employment/documents.zip${suffix}`, 'Документы_на_трудоустройство.zip');
+}
+
+export async function downloadEmploymentBankDetailsExcel({ studentIds = [] } = {}) {
+  const params = new URLSearchParams();
+  studentIds.forEach((studentId) => {
+    params.append('student_ids', String(studentId));
+  });
+
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return downloadFile(`/reports/employment/bank-details.zip${suffix}`, 'Банковские_реквизиты_ГПХ.zip');
 }
 
 export { API_BASE_URL };

@@ -29,7 +29,29 @@ from app.schemas.reports import (
     StudentEventsReport,
     StudentSearchMatch,
 )
+from app.services.generate_bank_details_excel import (
+    build_bank_details_exports,
+    generate_bank_details_excel,
+    make_bank_details_archive_filename,
+    make_bank_details_excel_filename_for_student,
+    make_student_folder_name,
+)
+from app.services.generate_opd_consent import (
+    generate_opd_consent,
+    make_opd_filename,
+    resolve_opd_template_path,
+)
+from app.services.generate_rekvizity import generate_rekvizity, make_filename as make_rekvizity_filename
+from app.services.generate_rekvizity import resolve_template_path as resolve_rekvizity_template_path
+from app.services.generate_rso_application import (
+    generate_rso_application,
+    make_rso_filename,
+    resolve_rso_template_path,
+)
 from app.services.generate_spravka import generate_spravka, make_filename, resolve_template_path
+from app.services.opd_consent_data import build_opd_consent_payload
+from app.services.rekvizity_data import build_rekvizity_payload
+from app.services.rso_application_data import build_rso_application_payload
 from app.services.spravka_data import build_spravka_payload
 from app.services.student_lookup import find_student_by_phone, normalize_phone
 
@@ -117,7 +139,7 @@ async def _resolve_student_for_search(
     query = search.strip()
     if _is_phone_search(query):
         digits = "".join(char for char in query if char.isdigit())
-        student = await find_student_by_phone(session, normalize_phone(int(digits)))
+        student = await find_student_by_phone(session, digits)
         return student, []
 
     students = await _find_students_by_name(session, query)
@@ -539,5 +561,140 @@ async def download_event_spravki_archive(
         path=zip_path,
         media_type="application/zip",
         filename=archive_name,
+        background=BackgroundTask(lambda: shutil.rmtree(tmp_dir, ignore_errors=True)),
+    )
+
+
+EMPLOYMENT_DOC_LABELS = {
+    "file_1": "Заявление на вступление",
+    "file_2": "Согласие ОПД",
+    "file_3": "Реквизиты",
+}
+IMPLEMENTED_EMPLOYMENT_DOCS = {"file_1", "file_2", "file_3"}
+
+
+def _employment_documents_to_generate(file: str | None) -> set[str]:
+    normalized = (file or "").strip()
+    if not normalized:
+        return set(IMPLEMENTED_EMPLOYMENT_DOCS)
+    if normalized not in EMPLOYMENT_DOC_LABELS:
+        raise HTTPException(status_code=422, detail="Некорректный тип документа.")
+    return {normalized}
+
+
+@router.get("/employment/documents.zip")
+async def download_employment_documents_archive(
+    session: AsyncSession = Depends(get_session),
+    student_ids: list[int] = Query(..., min_length=1),
+    file: str | None = Query(None),
+) -> FileResponse:
+    unique_ids = list(dict.fromkeys(student_ids))
+    documents = _employment_documents_to_generate(file)
+
+    unsupported = sorted(documents - IMPLEMENTED_EMPLOYMENT_DOCS)
+    if unsupported:
+        labels = ", ".join(EMPLOYMENT_DOC_LABELS[item] for item in unsupported)
+        raise HTTPException(
+            status_code=501,
+            detail=f"Формирование документов «{labels}» пока не реализовано.",
+        )
+
+    templates: dict[str, Path] = {}
+    try:
+        if "file_1" in documents:
+            templates["file_1"] = resolve_rso_template_path()
+        if "file_2" in documents:
+            templates["file_2"] = resolve_opd_template_path()
+        if "file_3" in documents:
+            templates["file_3"] = resolve_rekvizity_template_path()
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix="employment_docs_"))
+    zip_path = tmp_dir / "employment_documents.zip"
+
+    try:
+        with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            used_folder_names: set[str] = set()
+            for student_id in unique_ids:
+                student = await session.get(Student, student_id)
+                if student is None:
+                    raise HTTPException(status_code=404, detail=f"Студент не найден: {student_id}.")
+
+                full_name = _student_full_name(student.last_name, student.first_name, student.middle_name)
+                folder_name = make_student_folder_name(full_name, student_id)
+                if folder_name in used_folder_names:
+                    folder_name = f"{folder_name}_{student_id}"
+                used_folder_names.add(folder_name)
+
+                if "file_1" in documents:
+                    rso_payload = await build_rso_application_payload(session, student_id=student_id)
+                    filename = make_rso_filename(rso_payload["full_name"])
+                    docx_path = tmp_dir / f"{student_id}_{filename}"
+                    generate_rso_application(rso_payload, templates["file_1"], docx_path)
+                    archive.write(docx_path, arcname=f"{folder_name}/{filename}")
+
+                if "file_2" in documents:
+                    opd_payload = await build_opd_consent_payload(session, student_id=student_id)
+                    filename = make_opd_filename(opd_payload["fio"])
+                    docx_path = tmp_dir / f"{student_id}_{filename}"
+                    generate_opd_consent(opd_payload, templates["file_2"], docx_path)
+                    archive.write(docx_path, arcname=f"{folder_name}/{filename}")
+
+                if "file_3" in documents:
+                    rekvizity_payload = await build_rekvizity_payload(session, student_id=student_id)
+                    filename = make_rekvizity_filename(rekvizity_payload["fio"])
+                    docx_path = tmp_dir / f"{student_id}_{filename}"
+                    generate_rekvizity(rekvizity_payload, templates["file_3"], docx_path)
+                    archive.write(docx_path, arcname=f"{folder_name}/{filename}")
+    except HTTPException:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        raise
+    except Exception as exc:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        raise HTTPException(status_code=500, detail="Не удалось сформировать архив документов.") from exc
+
+    archive_name = "Документы_на_трудоустройство.zip"
+    return FileResponse(
+        path=zip_path,
+        media_type="application/zip",
+        filename=archive_name,
+        background=BackgroundTask(lambda: shutil.rmtree(tmp_dir, ignore_errors=True)),
+    )
+
+
+@router.get("/employment/bank-details.zip")
+async def download_employment_bank_details_archive(
+    session: AsyncSession = Depends(get_session),
+    student_ids: list[int] = Query(..., min_length=1),
+) -> FileResponse:
+    exports = await build_bank_details_exports(session, student_ids)
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix="employment_bank_details_"))
+    zip_path = tmp_dir / "bank_details.zip"
+
+    try:
+        with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            used_names: set[str] = set()
+            for export in exports:
+                filename = make_bank_details_excel_filename_for_student(export.full_name, export.student_id)
+                if filename in used_names:
+                    filename = make_bank_details_excel_filename_for_student(
+                        f"{export.full_name}_{export.student_id}",
+                        export.student_id,
+                    )
+                used_names.add(filename)
+
+                excel_path = tmp_dir / f"{export.student_id}_{filename}"
+                generate_bank_details_excel([export.row], excel_path)
+                archive.write(excel_path, arcname=filename)
+    except Exception as exc:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        raise HTTPException(status_code=500, detail="Не удалось сформировать архив с Excel файлами.") from exc
+
+    return FileResponse(
+        path=zip_path,
+        media_type="application/zip",
+        filename=make_bank_details_archive_filename(),
         background=BackgroundTask(lambda: shutil.rmtree(tmp_dir, ignore_errors=True)),
     )

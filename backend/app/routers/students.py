@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -116,3 +116,16 @@ async def update_student(
     await commit_session(session)
     await session.refresh(student)
     return student
+
+
+@router.delete("/{student_id}", status_code=204)
+async def delete_student(
+    student_id: int,
+    session: AsyncSession = Depends(get_session),
+) -> Response:
+    student = await session.get(Student, student_id)
+    if student is None:
+        raise HTTPException(status_code=404, detail="Студент не найден.")
+    await session.delete(student)
+    await commit_session(session)
+    return Response(status_code=204)
